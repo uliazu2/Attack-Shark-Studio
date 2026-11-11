@@ -94,7 +94,8 @@ class H510Window : Window
         mainStack.Children.Add(banner);
         title = new TextBlock { FontFamily = T.Display, FontSize = 34, FontWeight = FontWeights.Bold, Margin = new Thickness(0, 0, 0, 22) };
         mainStack.Children.Add(title); mainStack.Children.Add(pages);
-        AddPage("som", BuildSound()); AddPage("mic", BuildMic()); AddPage("lab", BuildLab());
+        AddPage("som", BuildSound()); AddPage("mixer", BuildMixer()); AddPage("eq", BuildEq()); AddPage("mic", BuildMic()); AddPage("lab", BuildLab());
+        var mixTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(2) }; mixTimer.Tick += (s, e) => { if (page == "mixer") RefreshMixer(false); }; mixTimer.Start();
         var poll = new DispatcherTimer { Interval = TimeSpan.FromSeconds(2) }; poll.Tick += (s, e) => RefreshValues(); poll.Start();
         var meterTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(40) }; meterTimer.Tick += (s, e) => UpdateMeter(); meterTimer.Start();
         Loaded += (s, e) => { Go("som"); Connect(); };
@@ -116,6 +117,8 @@ class H510Window : Window
         nav.Children.Add(navInd); var ns = new StackPanel(); nav.Children.Add(ns);
         var items = new[] {
             new[] { "som", "Som", "M4 14v-2a8 8 0 0 1 16 0v2M4 14h3v6H5a1 1 0 0 1-1-1zM20 14h-3v6h2a1 1 0 0 0 1-1z" },
+            new[] { "mixer", "Mixer", "M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1M15 4v4M9 10v4M17 16v4" },
+            new[] { "eq", "Equalizador", "M5 20v-7M5 9V4M12 20v-4M12 12V4M19 20v-9M19 7V4M3 13h4M10 12h4M17 11h4" },
             new[] { "mic", "Microfone", "M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3zM5 11a7 7 0 0 0 14 0M12 18v3" },
             new[] { "lab", "Laboratório", "M9 3h6M10 3v6l-5 9a2 2 0 0 0 2 3h10a2 2 0 0 0 2-3l-5-9V3" } };
         foreach (var it in items)
@@ -136,7 +139,8 @@ class H510Window : Window
     void Go(string key)
     {
         page = key;
-        title.Text = key == "som" ? "Som" : key == "mic" ? "Microfone" : "Laboratório";
+        title.Text = key == "som" ? "Som" : key == "mixer" ? "Mixer" : key == "eq" ? "Equalizador" : key == "mic" ? "Microfone" : "Laboratório";
+        if (key == "mixer") RefreshMixer(true);
         for (int i = 0; i < navBtns.Count; i++)
         {
             var b = navBtns[i]; bool on = (string)b.Tag == key; b.Foreground = on ? T.Text : T.Muted; ((Path)((StackPanel)b.Content).Children[0]).Stroke = on ? T.Accent : T.Muted;
@@ -289,6 +293,127 @@ class H510Window : Window
         try { lab.SendOutput(data); Log("→ enviado", data); } catch (Exception ex) { Log("envio falhou: " + ex.Message, null); }
     }
 
+    // ============================================================ MIXER
+    readonly StackPanel mixList = new StackPanel(); string mixKeys = ""; readonly List<Action> mixSync = new List<Action>();
+    FrameworkElement BuildMixer()
+    {
+        return Stack(16, Card(Stack(0, mixList), "Apps tocando no fone"),
+            Card(Txt("Só aparecem os programas que estão mandando som para o H510. Se um app não está aqui, ele está tocando em outra saída ou ainda não tocou nada desde que abriu.", 13, T.Muted)));
+    }
+    void RefreshMixer(bool force)
+    {
+        List<AppAudio> apps; try { apps = Mixer.Apps(spk != null ? spk.Id : null); } catch { apps = new List<AppAudio>(); }
+        string keys = string.Join("|", apps.Select(a => a.Key).ToArray());
+        if (!force && keys == mixKeys) { if (!mixList.IsMouseCaptureWithin) foreach (var a in mixSync) a(); return; }
+        mixKeys = keys; mixList.Children.Clear(); mixSync.Clear();
+        if (spk == null) { mixList.Children.Add(Txt("O headset não está conectado.", 13, T.Muted)); return; }
+        if (apps.Count == 0) { mixList.Children.Add(Txt("Nenhum programa tocando no fone agora.", 13, T.Muted)); return; }
+        for (int i = 0; i < apps.Count; i++)
+        {
+            var app = apps[i];
+            if (i > 0) mixList.Children.Add(Sep());
+            var g = new Grid { Margin = new Thickness(0, 10, 0, 10) };
+            g.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(40) }); g.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(200) });
+            g.ColumnDefinitions.Add(new ColumnDefinition()); g.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(56) }); g.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            var icon = AppIcon(app); g.Children.Add(icon);
+            var name = new TextBlock { Text = app.Name, FontWeight = FontWeights.Medium, VerticalAlignment = VerticalAlignment.Center, TextTrimming = TextTrimming.CharacterEllipsis, Margin = new Thickness(0, 0, 16, 0) };
+            Grid.SetColumn(name, 1); g.Children.Add(name);
+            var sl = Range(0, 100); sl.VerticalAlignment = VerticalAlignment.Center; Grid.SetColumn(sl, 2); g.Children.Add(sl);
+            var pct = new TextBlock { FontSize = 13, Foreground = T.Muted, HorizontalAlignment = HorizontalAlignment.Right, VerticalAlignment = VerticalAlignment.Center }; Grid.SetColumn(pct, 3); g.Children.Add(pct);
+            var mute = new ToggleButton { Style = S("Chip"), Content = "Mudo", Margin = new Thickness(14, 0, 0, 0), VerticalAlignment = VerticalAlignment.Center }; Grid.SetColumn(mute, 4); g.Children.Add(mute);
+            bool syncing = false;
+            Action sync = () => { syncing = true; try { sl.Value = Math.Round(app.Volume * 100); mute.IsChecked = app.Muted; } catch { } pct.Text = (int)sl.Value + "%"; sl.Opacity = mute.IsChecked == true ? .45 : 1; syncing = false; };
+            sl.ValueChanged += (s, e) => { pct.Text = (int)sl.Value + "%"; if (!syncing) try { app.SetVolume((float)(sl.Value / 100)); } catch { } };
+            mute.Click += (s, e) => { try { app.SetMute(mute.IsChecked == true); } catch { } sl.Opacity = mute.IsChecked == true ? .45 : 1; };
+            sync(); mixSync.Add(sync);
+            mixList.Children.Add(g);
+        }
+    }
+    static FrameworkElement AppIcon(AppAudio app)
+    {
+        try
+        {
+            if (app.ExePath != null)
+                using (var ic = System.Drawing.Icon.ExtractAssociatedIcon(app.ExePath))
+                {
+                    var src = Imaging.CreateBitmapSourceFromHIcon(ic.Handle, Int32Rect.Empty, BitmapSizeOptions.FromWidthAndHeight(32, 32));
+                    return new Image { Source = src, Width = 26, Height = 26, HorizontalAlignment = HorizontalAlignment.Left, VerticalAlignment = VerticalAlignment.Center };
+                }
+        }
+        catch { }
+        return new Border { Width = 26, Height = 26, CornerRadius = new CornerRadius(7), Background = T.Panel2, HorizontalAlignment = HorizontalAlignment.Left, VerticalAlignment = VerticalAlignment.Center,
+            Child = new TextBlock { Text = app.System ? "♪" : app.Name.Substring(0, 1).ToUpper(), FontWeight = FontWeights.SemiBold, Foreground = T.Muted, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center } };
+    }
+
+    // ============================================================ EQUALIZADOR
+    readonly double[] gains = new double[10]; readonly Slider[] bandSl = new Slider[10]; readonly TextBlock[] bandOut = new TextBlock[10];
+    ToggleButton eqSw; Polyline eqCurve; DispatcherTimer eqSave; bool eqLoading;
+    FrameworkElement BuildEq()
+    {
+        if (!Apo.Installed)
+            return Card(Stack(8, Txt("O equalizador usa o Equalizer APO, um programa gratuito que processa o som do Windows.", 14),
+                Txt("Instale o Equalizer APO, marque o H510-PRO na lista de dispositivos dele e abra o H510 Studio de novo.", 13, T.Muted)));
+        bool on = Apo.Read(gains);
+        eqSw = new SwitchButton { IsChecked = on }; eqSw.Click += (s, e) => SaveEq(true);
+        eqCurve = new Polyline { Stroke = T.Accent, StrokeThickness = 2, StrokeLineJoin = PenLineJoin.Round };
+        var mid = new Border { Height = 1, Background = T.Line, VerticalAlignment = VerticalAlignment.Center };
+        var graph = new Grid { Height = 110, ClipToBounds = true }; graph.Children.Add(mid); graph.Children.Add(new Canvas { Children = { eqCurve } });
+        graph.SizeChanged += (s, e) => DrawCurve(graph.ActualWidth, graph.ActualHeight);
+        var presets = new WrapPanel();
+        for (int i = 0; i < Apo.PresetNames.Length; i++)
+        {
+            int k = i; var b = Btn(Apo.PresetNames[i]); b.Margin = new Thickness(0, 0, 8, 0);
+            b.Click += (s, e) => { eqLoading = true; for (int j = 0; j < 10; j++) bandSl[j].Value = Apo.Presets[k][j]; eqLoading = false; SaveEq(false); };
+            presets.Children.Add(b);
+        }
+        var bands = new StackPanel();
+        for (int i = 0; i < 10; i++)
+        {
+            int k = i; var f = Apo.Bands[i];
+            var g = new Grid { Margin = new Thickness(0, 5, 0, 5) };
+            g.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(70) }); g.ColumnDefinitions.Add(new ColumnDefinition()); g.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(70) });
+            var lbl = Txt(f >= 1000 ? (f / 1000) + " kHz" : f + " Hz", 13, T.Muted); lbl.VerticalAlignment = VerticalAlignment.Center; g.Children.Add(lbl);
+            var sl = Range(-12, 12); sl.TickFrequency = 0.5; sl.IsSnapToTickEnabled = true; sl.Value = gains[i]; sl.VerticalAlignment = VerticalAlignment.Center; Grid.SetColumn(sl, 1); g.Children.Add(sl);
+            var o = Txt("", 13); o.HorizontalAlignment = HorizontalAlignment.Right; o.VerticalAlignment = VerticalAlignment.Center; Grid.SetColumn(o, 2); g.Children.Add(o);
+            bandSl[i] = sl; bandOut[i] = o; ShowGain(i);
+            sl.ValueChanged += (s, e) => { gains[k] = sl.Value; ShowGain(k); DrawCurve(graph.ActualWidth, graph.ActualHeight); if (!eqLoading) SaveEq(false); };
+            sl.MouseDoubleClick += (s, e) => sl.Value = 0;
+            bands.Children.Add(g);
+        }
+        eqSave = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(250) };
+        eqSave.Tick += (s, e) => { eqSave.Stop(); WriteEq(); };
+        var head = Card(Stack(0, ToggleRow("Equalizador do H510 Studio", "Funciona em todos os programas, pelo Equalizer APO", eqSw), Sep(), new Border { Height = 14 }, graph, new Border { Height = 14 }, presets));
+        return Stack(16, head, Card(bands, "Bandas"),
+            Card(Txt("Sua configuração atual do Equalizer APO continua valendo; o app soma as bandas dele por cima. Ao ligar pela primeira vez, o app faz um backup do config.txt e acrescenta uma linha no fim dele. Desligar tira essa linha.", 13, T.Muted)));
+    }
+    void ShowGain(int i) { var v = gains[i]; bandOut[i].Text = (v > 0 ? "+" : "") + v.ToString("0.0") + " dB"; bandOut[i].Foreground = Math.Abs(v) < .05 ? T.Muted : T.Text; }
+    void DrawCurve(double w, double h)
+    {
+        if (eqCurve == null || w <= 0) return;
+        var pts = new PointCollection();
+        for (int x = 0; x <= 100; x++)
+        {
+            double pos = x / 100.0 * 9, g;
+            int a = (int)Math.Floor(pos), b = Math.Min(9, a + 1); double t = pos - a; t = t * t * (3 - 2 * t);
+            g = gains[a] + (gains[b] - gains[a]) * t;
+            pts.Add(new Point(x / 100.0 * w, h / 2 - g / 12 * (h / 2 - 6)));
+        }
+        eqCurve.Points = pts; eqCurve.Opacity = eqSw.IsChecked == true ? 1 : .35;
+    }
+    void SaveEq(bool now) { if (eqSave == null) return; if (now) { eqSave.Stop(); WriteEq(); } else { eqSave.Stop(); eqSave.Start(); } }
+    void WriteEq()
+    {
+        bool on = eqSw.IsChecked == true;
+        try
+        {
+            if (on) Apo.Link();
+            Apo.Write(on, gains);
+            if (!on) Apo.Unlink();
+        }
+        catch (Exception ex) { Toast("Não deu para salvar no Equalizer APO: " + ex.Message, true); }
+        eqCurve.Opacity = on ? 1 : .35;
+    }
+
     // ---------- avisos
     void Toast(string msg, bool err)
     {
@@ -311,6 +436,29 @@ static class H510Program
     [STAThread]
     static void Main(string[] args)
     {
+        if (args.Length == 2 && args[0] == "--voltest")
+        {
+            // lê o volume, muda para 37%, lê de novo e devolve o valor original
+            var sb = new StringBuilder(); var e = Audio.FindHeadset(Audio.Render);
+            if (e == null) sb.AppendLine("sem headset");
+            else
+            {
+                float v0 = Audio.GetVolume(e.Id); Audio.SetVolume(e.Id, 0.37f); Thread.Sleep(400);
+                float v1 = Audio.GetVolume(e.Id); Audio.SetVolume(e.Id, v0); Thread.Sleep(400);
+                sb.AppendLine("mudo " + Audio.GetMute(e.Id)); sb.AppendLine("original " + v0 + " | depois de 0.37 " + v1 + " | restaurado " + Audio.GetVolume(e.Id));
+                foreach (var a in Mixer.Apps(e.Id)) sb.AppendLine("app: " + a.Name + " | volume " + a.Volume + " | sessões " + a.Parts.Count);
+            }
+            File.WriteAllText(args[1], sb.ToString()); return;
+        }
+        if (args.Length == 2 && args[0] == "--apotest")
+        {
+            // liga, escreve e desliga numa pasta de teste; o config.txt de lá tem que voltar igual
+            Apo.Override = args[1]; var g = new double[] { 6, 5, 3, 1, 0, 0, 0, 0, 0, 0 };
+            Apo.Link(); Apo.Link(); Apo.Write(true, g);
+            var r = new double[10]; bool on = Apo.Read(r);
+            File.WriteAllText(System.IO.Path.Combine(args[1], "linked.txt"), File.ReadAllText(System.IO.Path.Combine(args[1], "config.txt")) + "\n---lido: " + on + " " + string.Join(",", r.Select(x => x.ToString()).ToArray()));
+            Apo.Write(false, g); Apo.Unlink(); return;
+        }
         bool fresh; var mutex = new Mutex(true, "H510Studio-single", out fresh);
         if (!fresh) { MessageBox.Show("O H510 Studio já está aberto.", "H510 Studio"); return; }
         var app = new Application { ShutdownMode = ShutdownMode.OnMainWindowClose };
@@ -323,7 +471,7 @@ static class H510Program
             w.Loaded += async (s, e) =>
             {
                 await Task.Delay(2500);
-                foreach (var pg in new[] { "som", "mic", "lab" })
+                foreach (var pg in new[] { "lab", "som", "mixer", "eq", "mic" })
                 {
                     try { typeof(H510Window).GetMethod("Go", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).Invoke(w, new object[] { pg }); } catch (Exception ex) { log.AppendLine(pg + ": " + (ex.InnerException ?? ex)); }
                     await Task.Delay(1500);
