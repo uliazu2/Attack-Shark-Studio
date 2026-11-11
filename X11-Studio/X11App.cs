@@ -103,10 +103,10 @@ class MouseView : Viewbox
         var cv = new Canvas { Width = 260, Height = 430 };
         var glow = new Path { Data = Geometry.Parse("M130,12 C60,12 30,82 30,172 L30,300 C30,372 75,414 130,414 C185,414 230,372 230,300 L230,172 C230,82 200,12 130,12 Z"), Stroke = Glow, StrokeThickness = 14, Effect = new BlurEffect { Radius = 18 } };
         cv.Children.Add(glow);
-        var body = new Path { Data = glow.Data, Fill = new LinearGradientBrush(T.C("#1D1D1F"), T.C("#141415"), 90), Stroke = T.Line2, StrokeThickness = 1.5, Effect = new DropShadowEffect { BlurRadius = 30, ShadowDepth = 12, Opacity = .55, Direction = 270 } };
+        var body = new Path { Data = glow.Data, Fill = new LinearGradientBrush(T.C("#22303F"), T.C("#16202D"), 90), Stroke = T.Line2, StrokeThickness = 1.5, Effect = new DropShadowEffect { BlurRadius = 30, ShadowDepth = 12, Opacity = .55, Direction = 270 } };
         cv.Children.Add(body);
         var logo = new Ellipse { Width = 54, Height = 54, Fill = Logo, Effect = new BlurEffect { Radius = 16 } }; Canvas.SetLeft(logo, 103); Canvas.SetTop(logo, 300); cv.Children.Add(logo);
-        var mark = new Path { Data = Geometry.Parse("M118,330 L130,312 L142,330 L136,330 L130,321 L124,330 Z"), Fill = T.B("#3B3B3E") }; cv.Children.Add(mark);
+        var mark = new Path { Data = Geometry.Parse("M118,330 L130,312 L142,330 L136,330 L130,321 L124,330 Z"), Fill = T.B("#3B4D63") }; cv.Children.Add(mark);
         Part(cv, 1, new Path { Data = Geometry.Parse("M126,16 C72,20 42,82 40,172 L126,172 Z") });
         Part(cv, 2, new Path { Data = Geometry.Parse("M134,16 C188,20 218,82 220,172 L134,172 Z") });
         Part(cv, 3, Place(new Rectangle { Width = 18, Height = 52, RadiusX = 9, RadiusY = 9 }, 121, 52));
@@ -118,19 +118,19 @@ class MouseView : Viewbox
     static Shape Place(Shape s, double x, double y) { Canvas.SetLeft(s, x); Canvas.SetTop(s, y); return s; }
     void Part(Canvas cv, int slot, Shape s)
     {
-        s.Fill = new LinearGradientBrush(T.C("#2B2B2E"), T.C("#1A1A1C"), 90); s.Stroke = T.B("#2E2E31"); s.StrokeThickness = 1.2;
+        s.Fill = new LinearGradientBrush(T.C("#2E4058"), T.C("#1C2734"), 90); s.Stroke = T.B("#34485F"); s.StrokeThickness = 1.2;
         if (interactive)
         {
             s.Cursor = Cursors.Hand;
-            s.MouseEnter += (a, b) => { if (s.Tag == null) s.Stroke = T.B("#5C5A55"); };
-            s.MouseLeave += (a, b) => { if (s.Tag == null) s.Stroke = T.B("#2E2E31"); };
+            s.MouseEnter += (a, b) => { if (s.Tag == null) s.Stroke = T.B("#5B6B7A"); };
+            s.MouseLeave += (a, b) => { if (s.Tag == null) s.Stroke = T.B("#34485F"); };
             s.MouseLeftButtonDown += (a, b) => PartClicked(slot);
         }
         Parts[slot] = s; cv.Children.Add(s);
     }
     public void Select(int slot)
     {
-        foreach (var kv in Parts) { bool on = kv.Key == slot; kv.Value.Tag = on ? (object)true : null; kv.Value.Stroke = on ? T.Accent : T.B("#2E2E31"); kv.Value.StrokeThickness = on ? 2.5 : 1.2; }
+        foreach (var kv in Parts) { bool on = kv.Key == slot; kv.Value.Tag = on ? (object)true : null; kv.Value.Stroke = on ? T.Accent : T.B("#34485F"); kv.Value.StrokeThickness = on ? 2.5 : 1.2; }
     }
 }
 
@@ -151,12 +151,15 @@ class X11Window : Window
     // ---------- helpers (mesmo visual do K86 Studio)
     static Style S(string k) { return (Style)Application.Current.Resources[k]; }
     static TextBlock Txt(string t, double size = 14, Brush fg = null, FontWeight? w = null) { return new TextBlock { Text = t, FontSize = size, Foreground = fg ?? T.Text, FontWeight = w ?? FontWeights.Normal, TextWrapping = TextWrapping.Wrap }; }
-    static Border Card(UIElement child, string heading = null)
+    // seção agrupada no jeito da Apple: título pequeno fora da caixa, caixa arredondada
+    static FrameworkElement Card(UIElement child, string heading = null)
     {
+        var box = new Border { Background = T.Panel, BorderBrush = T.Line, BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(12), Padding = new Thickness(16), Child = child };
+        if (heading == null) return box;
         var sp = new StackPanel();
-        if (heading != null) sp.Children.Add(new TextBlock { Text = heading.ToUpper(), FontFamily = T.Mono, FontSize = 10.5, Foreground = T.Faint, Margin = new Thickness(0, 0, 0, 14) });
-        sp.Children.Add(child);
-        return new Border { Background = T.Panel, BorderBrush = T.Line, BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(8), Padding = new Thickness(16), Child = sp };
+        sp.Children.Add(new TextBlock { Text = heading.ToUpper(), FontSize = 11.5, Foreground = T.Muted, Margin = new Thickness(14, 0, 0, 7) });
+        sp.Children.Add(box);
+        return sp;
     }
     static Button Btn(string text, string style = "Btn") { return new Button { Content = text, Style = S(style) }; }
     static Slider Range(int min, int max) { return new Slider { Style = S("Range"), Minimum = min, Maximum = max }; }
@@ -232,11 +235,11 @@ class X11Window : Window
         shell.Children.Add(BuildSidebar());
         var main = new ScrollViewer { VerticalScrollBarVisibility = ScrollBarVisibility.Auto, Padding = new Thickness(34, 26, 34, 50) }; Grid.SetColumn(main, 1); shell.Children.Add(main);
         var mainStack = new StackPanel { MaxWidth = 1060 }; main.Content = mainStack;
-        banner = new Border { Visibility = Visibility.Collapsed, CornerRadius = new CornerRadius(7), BorderBrush = T.B("#4DFBBF24"), BorderThickness = new Thickness(1), Background = T.B("#14FBBF24"), Padding = new Thickness(16, 12, 16, 12), Margin = new Thickness(0, 0, 0, 18) };
+        banner = new Border { Visibility = Visibility.Collapsed, CornerRadius = new CornerRadius(12), BorderBrush = T.B("#4DFBBF24"), BorderThickness = new Thickness(1), Background = T.B("#14FBBF24"), Padding = new Thickness(16, 12, 16, 12), Margin = new Thickness(0, 0, 0, 18) };
         var bg = new DockPanel(); var retry = Btn("Tentar de novo"); retry.Click += (s, e) => Connect(); DockPanel.SetDock(retry, Dock.Right); bg.Children.Add(retry);
         bannerTxt = Txt("O X11 não foi encontrado. Ligue o receptor sem fio (ou o cabo) e mexa o mouse para ele acordar.", 13.5, T.B("#FDE68A")); bannerTxt.VerticalAlignment = VerticalAlignment.Center; bg.Children.Add(bannerTxt); banner.Child = bg;
         mainStack.Children.Add(banner);
-        title = new TextBlock { FontFamily = T.Display, FontSize = 30, FontWeight = FontWeights.SemiBold, Margin = new Thickness(0, 4, 0, 0) }; subtitle = new TextBlock { FontFamily = T.Mono, FontSize = 11, Foreground = T.Accent };
+        title = new TextBlock { FontFamily = T.Display, FontSize = 34, FontWeight = FontWeights.Bold }; subtitle = new TextBlock { Visibility = Visibility.Collapsed };
         var header = Stack(0, subtitle, title); header.Margin = new Thickness(0, 0, 0, 22); mainStack.Children.Add(header); mainStack.Children.Add(pages);
         AddPage("dpi", BuildDpi()); AddPage("luz", BuildLight()); AddPage("botoes", BuildButtons()); AddPage("desempenho", BuildPerf());
         be.BatteryChanged += () => Dispatcher.BeginInvoke(new Action(ShowBattery));
@@ -249,16 +252,16 @@ class X11Window : Window
 
     FrameworkElement BuildSidebar()
     {
-        var side = new Border { BorderBrush = T.Line, BorderThickness = new Thickness(0, 0, 1, 0), Padding = new Thickness(14, 20, 14, 20), Background = new LinearGradientBrush(T.C("#0B0B0C"), T.C("#0E0E0F"), 90) };
+        var side = new Border { BorderBrush = T.Line, BorderThickness = new Thickness(0, 0, 1, 0), Padding = new Thickness(14, 20, 14, 20), Background = new LinearGradientBrush(T.C("#171A21"), T.C("#1B2838"), 90) };
         var dp = new DockPanel(); side.Child = dp;
         var brand = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(6, 0, 0, 24) }; DockPanel.SetDock(brand, Dock.Top);
-        var mark = new Border { Width = 10, Height = 10, CornerRadius = new CornerRadius(2), Background = T.Accent, VerticalAlignment = VerticalAlignment.Center };
+        var mark = new Border { Width = 30, Height = 30, CornerRadius = new CornerRadius(8), VerticalAlignment = VerticalAlignment.Center, Background = new LinearGradientBrush(T.C("#47BFFF"), T.C("#1A44C2"), 45), Child = new TextBlock { Text = "X", Foreground = Brushes.White, FontFamily = T.Display, FontWeight = FontWeights.Bold, FontSize = 16, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center } };
         brand.Children.Add(mark);
         var bt = new StackPanel { Margin = new Thickness(10, 0, 0, 0), VerticalAlignment = VerticalAlignment.Center };
-        bt.Children.Add(new TextBlock { Text = "X11 STUDIO", FontFamily = T.Mono, FontWeight = FontWeights.Bold, FontSize = 13 }); bt.Children.Add(new TextBlock { Text = "ATTACK SHARK", FontFamily = T.Mono, FontSize = 10, Foreground = T.Faint, Margin = new Thickness(0, 2, 0, 0) });
+        bt.Children.Add(new TextBlock { Text = "X11 Studio", FontFamily = T.Display, FontWeight = FontWeights.SemiBold, FontSize = 15 }); bt.Children.Add(new TextBlock { Text = "Attack Shark", FontSize = 11.5, Foreground = T.Muted });
         brand.Children.Add(bt); dp.Children.Add(brand);
         var nav = new Grid(); DockPanel.SetDock(nav, Dock.Top);
-        navInd = new Border { Width = 2, Height = 18, Margin = new Thickness(0, 10, 0, 0), HorizontalAlignment = HorizontalAlignment.Left, VerticalAlignment = VerticalAlignment.Top, CornerRadius = new CornerRadius(1), Background = T.Accent, RenderTransform = new TranslateTransform() };
+        navInd = new Border { Height = 38, VerticalAlignment = VerticalAlignment.Top, CornerRadius = new CornerRadius(8), Background = T.B("#2E1A9FFF"), RenderTransform = new TranslateTransform() };
         nav.Children.Add(navInd); var ns = new StackPanel(); nav.Children.Add(ns);
         var items = new[] {
             new[] { "dpi", "DPI", "M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM12 7v5l3 2" },
@@ -278,7 +281,7 @@ class X11Window : Window
         stTitle = new TextBlock { Text = "Procurando…", FontWeight = FontWeights.Medium }; stSub = Txt("Ligue o receptor ou o cabo", 12, T.Muted); stSub.Margin = new Thickness(0, 4, 0, 0);
         battBar = new Border { Height = 4, CornerRadius = new CornerRadius(2), Background = T.Ok, RenderTransformOrigin = new Point(0, .5), RenderTransform = new ScaleTransform(0, 1) };
         battTxt = Txt("Bateria: aguardando o mouse", 12, T.Muted);
-        var battTrack = new Border { Height = 4, CornerRadius = new CornerRadius(2), Background = T.B("#2E2E31"), Child = battBar, Margin = new Thickness(0, 10, 0, 6) };
+        var battTrack = new Border { Height = 4, CornerRadius = new CornerRadius(2), Background = T.B("#34485F"), Child = battBar, Margin = new Thickness(0, 10, 0, 6) };
         status.Child = Stack(0, Row(0, dot, stTitle), stSub, battTrack, battTxt);
         dp.Children.Add(status); dp.Children.Add(new Border());
         return side;
@@ -305,7 +308,7 @@ class X11Window : Window
     {
         bool ok = await Task.Run(() => be.Connected());
         connected = ok; dot.Fill = ok ? T.Ok : T.Faint;
-        stTitle.Text = ok ? "X11 conectado" : "Desconectado"; stSub.Text = ok ? (be.Wireless ? "Pelo receptor 2.4G" : "Pelo cabo USB") : "Ligue o receptor ou o cabo";
+        stTitle.Text = ok ? "Conectado" : "Desconectado"; stTitle.Foreground = ok ? T.B("#57CBDE") : T.Muted; stSub.Text = ok ? (be.Wireless ? "Pelo receptor 2.4G" : "Pelo cabo USB") : "Ligue o receptor ou o cabo";
         banner.Visibility = ok ? Visibility.Collapsed : Visibility.Visible;
         if (!ok) return;
         try { st = await Task.Run(() => be.Load()); ShowAll(); }
@@ -327,7 +330,7 @@ class X11Window : Window
     void Toast(string msg, bool err)
     {
         var tb = Txt(msg, 13.5); tb.MaxWidth = 340;
-        var b = new Border { CornerRadius = new CornerRadius(7), Background = T.B("#1D1D1F"), BorderBrush = T.Line2, BorderThickness = new Thickness(1), Padding = new Thickness(14, 12, 14, 12), Margin = new Thickness(0, 8, 0, 0),
+        var b = new Border { CornerRadius = new CornerRadius(12), Background = T.B("#22303F"), BorderBrush = T.Line2, BorderThickness = new Thickness(1), Padding = new Thickness(14, 12, 14, 12), Margin = new Thickness(0, 8, 0, 0),
             Effect = new DropShadowEffect { BlurRadius = 30, ShadowDepth = 10, Opacity = .5, Direction = 270 }, RenderTransform = new TranslateTransform(0, 40), Opacity = 0,
             Child = Row(10, new Ellipse { Width = 8, Height = 8, Fill = err ? T.Danger : T.Ok }, tb) };
         toasts.Children.Add(b);
@@ -368,7 +371,7 @@ class X11Window : Window
             UIElement[] cells = { curBtn, num, dotBtn, r.Slider, r.Value, r.On };
             for (int c = 0; c < cells.Length; c++) { Grid.SetColumn(cells[c], c); if (cells[c] is FrameworkElement) ((FrameworkElement)cells[c]).VerticalAlignment = VerticalAlignment.Center; g.Children.Add(cells[c]); }
             r.On.Margin = new Thickness(14, 0, 0, 0);
-            r.Card = new Border { CornerRadius = new CornerRadius(7), Padding = new Thickness(10, 9, 14, 9), Margin = new Thickness(0, 0, 0, 6), BorderThickness = new Thickness(1), BorderBrush = Brushes.Transparent, Child = g };
+            r.Card = new Border { CornerRadius = new CornerRadius(12), Padding = new Thickness(10, 9, 14, 9), Margin = new Thickness(0, 0, 0, 6), BorderThickness = new Thickness(1), BorderBrush = Brushes.Transparent, Child = g };
             stages.Add(r); list.Children.Add(r.Card);
         }
         indicatorSeg = new Seg(true).Items("Piscando", "Fixa", "Desligada"); indicatorSeg.Changed += i => { if (st != null) { st.Dpi.Indicator = i + 1; PushDpi(); } };
@@ -411,7 +414,7 @@ class X11Window : Window
             r.On.IsChecked = on; r.Slider.Value = StepIndex(Math.Max(50, st.Dpi.Dpi[i])); r.Value.Text = DpiSteps[(int)r.Slider.Value].ToString("N0", new System.Globalization.CultureInfo("pt-BR"));
             r.Dot.Fill = new SolidColorBrush(T.Rgb(st.Dpi.Color[i], 1));
             r.Current.Fill = cur ? T.Accent : Brushes.Transparent; r.Current.Stroke = cur ? T.Accent : T.Line2;
-            r.Card.Background = cur ? T.B("#1C1C1E") : Brushes.Transparent; r.Card.BorderBrush = cur ? T.Line2 : Brushes.Transparent;
+            r.Card.Background = cur ? T.B("#223044") : Brushes.Transparent; r.Card.BorderBrush = cur ? T.Line2 : Brushes.Transparent;
             r.Slider.IsEnabled = on; r.Value.Opacity = on ? 1 : .4;
         }
         indicatorSeg.Select(Math.Max(0, Math.Min(2, st.Dpi.Indicator - 1)), false); lodSeg.Select(Math.Max(0, Math.Min(2, st.Dpi.LiftOff)), false);
@@ -545,7 +548,7 @@ class X11Window : Window
         int hid = KeyToHid(k); if (hid == 0) return;
         capturing = false; capBtn.BorderBrush = T.Line2; capBtn.Background = T.Panel2;
         var slot = new ButtonSlot(Buttons.KEYBOARD, capMods, hid);
-        capBtn.Content = new Border { CornerRadius = new CornerRadius(7), Background = T.Panel3, BorderBrush = T.Line2, BorderThickness = new Thickness(1, 1, 1, 2), Padding = new Thickness(10, 3, 10, 3), Child = Txt(Describe(slot).Replace("Teclado: ", ""), 13, T.Text, FontWeights.Medium) };
+        capBtn.Content = new Border { CornerRadius = new CornerRadius(12), Background = T.Panel3, BorderBrush = T.Line2, BorderThickness = new Thickness(1, 1, 1, 2), Padding = new Thickness(10, 3, 10, 3), Child = Txt(Describe(slot).Replace("Teclado: ", ""), 13, T.Text, FontWeights.Medium) };
         foreach (var o in actionList.Children.OfType<ToggleButton>()) o.IsChecked = false;
         SetPending(slot);
     }

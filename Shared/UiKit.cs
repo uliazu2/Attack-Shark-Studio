@@ -26,11 +26,11 @@ static class T
 {
     public static Color C(string hex) { return (Color)ColorConverter.ConvertFromString(hex); }
     public static SolidColorBrush B(string hex) { var b = new SolidColorBrush(C(hex)); b.Freeze(); return b; }
-    public static readonly SolidColorBrush Bg = B("#0E0E0F"), Panel = B("#141415"), Panel2 = B("#19191A"), Panel3 = B("#202022"),
-        Line = B("#262628"), Line2 = B("#323235"), Text = B("#ECEAE6"), Muted = B("#8E8C87"), Faint = B("#5C5A55"),
-        Accent = B("#FF5B1F"), AccentSoft = B("#22FF5B1F"), Accent2 = B("#FF9A66"), Danger = B("#FF4F4F"), Ok = B("#8BD46A");
+    public static readonly SolidColorBrush Bg = B("#1B2838"), Panel = B("#16202D"), Panel2 = B("#1F2B3A"), Panel3 = B("#2A3F5A"),
+        Line = B("#26364A"), Line2 = B("#34485F"), Text = B("#EEF3F7"), Muted = B("#8F98A0"), Faint = B("#5B6B7A"),
+        Accent = B("#1A9FFF"), AccentSoft = B("#331A9FFF"), Accent2 = B("#57CBDE"), Danger = B("#FF5A5F"), Ok = B("#57CBDE");
     public static readonly FontFamily Font = new FontFamily("Segoe UI Variable Text, Segoe UI");
-    public static readonly FontFamily Mono = new FontFamily("Cascadia Mono, Consolas");
+    public static readonly FontFamily Mono = new FontFamily("Segoe UI Variable Display, Segoe UI");
     public static readonly FontFamily Display = new FontFamily("Segoe UI Variable Display, Segoe UI");
     public static readonly KeySpline EaseOut = new KeySpline(0.23, 1, 0.32, 1);     // entrar/sair
     public static readonly KeySpline InOut = new KeySpline(0.77, 0, 0.175, 1);      // mover na tela
@@ -91,35 +91,35 @@ static class T
     }
     public static ResourceDictionary Styles()
     {
-        string common = "<Setter Property='Foreground' Value='#ECEAE6'/><Setter Property='Cursor' Value='Hand'/><Setter Property='FocusVisualStyle' Value='{x:Null}'/>" +
+        string common = "<Setter Property='Foreground' Value='#EEF3F7'/><Setter Property='Cursor' Value='Hand'/><Setter Property='FocusVisualStyle' Value='{x:Null}'/>" +
                         "<Setter Property='HorizontalContentAlignment' Value='Center'/><Setter Property='VerticalContentAlignment' Value='Center'/>";
-        string checkedChip = "<Trigger Property='IsChecked' Value='True'><Setter TargetName='bd' Property='BorderBrush' Value='#FF5B1F'/><Setter TargetName='bd' Property='Background' Value='#22FF5B1F'/></Trigger>";
-        string checkedFx = "<Trigger Property='IsChecked' Value='True'><Setter TargetName='bd' Property='BorderBrush' Value='#FF5B1F'/><Setter TargetName='bd' Property='Background'><Setter.Value><SolidColorBrush Color='#202022'/></Setter.Value></Setter></Trigger>";
+        string checkedChip = "<Trigger Property='IsChecked' Value='True'><Setter TargetName='bd' Property='BorderBrush' Value='#1A9FFF'/><Setter TargetName='bd' Property='Background' Value='#331A9FFF'/></Trigger>";
+        string checkedFx = "<Trigger Property='IsChecked' Value='True'><Setter TargetName='bd' Property='BorderBrush' Value='#1A9FFF'/><Setter TargetName='bd' Property='Background'><Setter.Value><SolidColorBrush Color='#2A3F5A'/></Setter.Value></Setter></Trigger>";
         string xaml = "<ResourceDictionary xmlns='http://schemas.microsoft.com/winfx/2006/xaml/presentation' xmlns:x='http://schemas.microsoft.com/winfx/2006/xaml'>" +
-            "<Style x:Key='Btn' TargetType='Button'>" + common + "<Setter Property='Background' Value='#202022'/><Setter Property='BorderBrush' Value='#323235'/><Setter Property='BorderThickness' Value='1'/><Setter Property='Height' Value='36'/><Setter Property='Padding' Value='14,0'/><Setter Property='FontWeight' Value='Medium'/>" + BtnTemplate("Button", 6, "") + "</Style>" +
-            "<Style x:Key='Primary' TargetType='Button' BasedOn='{StaticResource Btn}'><Setter Property='Background' Value='#FF5B1F'/><Setter Property='BorderBrush' Value='#FF5B1F'/><Setter Property='Foreground' Value='#170A04'/><Style.Triggers><Trigger Property='IsEnabled' Value='False'><Setter Property='Background' Value='#202022'/><Setter Property='BorderBrush' Value='#262628'/><Setter Property='Foreground' Value='#8E8C87'/></Trigger></Style.Triggers></Style>" +
+            "<Style x:Key='Btn' TargetType='Button'>" + common + "<Setter Property='Background' Value='#2A3F5A'/><Setter Property='BorderBrush' Value='#34485F'/><Setter Property='BorderThickness' Value='1'/><Setter Property='Height' Value='36'/><Setter Property='Padding' Value='14,0'/><Setter Property='FontWeight' Value='Medium'/>" + BtnTemplate("Button", 8, "") + "</Style>" +
+            "<Style x:Key='Primary' TargetType='Button' BasedOn='{StaticResource Btn}'><Setter Property='Background'><Setter.Value><LinearGradientBrush StartPoint='0,0' EndPoint='1,1'><GradientStop Color='#47BFFF' Offset='0'/><GradientStop Color='#1A6FE0' Offset='1'/></LinearGradientBrush></Setter.Value></Setter><Setter Property='BorderBrush' Value='Transparent'/><Setter Property='Foreground' Value='#FFFFFF'/><Style.Triggers><Trigger Property='IsEnabled' Value='False'><Setter Property='Background' Value='#2A3F5A'/><Setter Property='BorderBrush' Value='#26364A'/><Setter Property='Foreground' Value='#8F98A0'/></Trigger></Style.Triggers></Style>" +
             "<Style x:Key='Ghost' TargetType='Button' BasedOn='{StaticResource Btn}'><Setter Property='Background' Value='Transparent'/><Setter Property='BorderBrush' Value='Transparent'/></Style>" +
-            "<Style x:Key='Danger' TargetType='Button' BasedOn='{StaticResource Btn}'><Setter Property='Foreground' Value='#FF4F4F'/></Style>" +
-            "<Style x:Key='Plain' TargetType='Button'>" + common + "<Setter Property='Background' Value='Transparent'/><Setter Property='BorderBrush' Value='Transparent'/><Setter Property='BorderThickness' Value='0'/><Setter Property='Padding' Value='0'/>" + BtnTemplate("Button", 6, "") + "</Style>" +
-            "<Style x:Key='Chip' TargetType='ToggleButton'>" + common + "<Setter Property='Background' Value='#19191A'/><Setter Property='BorderBrush' Value='#262628'/><Setter Property='BorderThickness' Value='1'/><Setter Property='Height' Value='30'/><Setter Property='Padding' Value='11,0'/><Setter Property='FontSize' Value='12.5'/><Setter Property='Margin' Value='0,0,6,6'/>" + BtnTemplate("ToggleButton", 5, checkedChip) + "</Style>" +
-            "<Style x:Key='Fx' TargetType='ToggleButton'>" + common + "<Setter Property='Background' Value='#19191A'/><Setter Property='BorderBrush' Value='#262628'/><Setter Property='BorderThickness' Value='1'/><Setter Property='Height' Value='62'/><Setter Property='Width' Value='126'/><Setter Property='Padding' Value='11,10'/><Setter Property='Margin' Value='0,0,8,8'/><Setter Property='HorizontalContentAlignment' Value='Stretch'/><Setter Property='VerticalContentAlignment' Value='Stretch'/>" + BtnTemplate("ToggleButton", 7, checkedFx) + "</Style>" +
+            "<Style x:Key='Danger' TargetType='Button' BasedOn='{StaticResource Btn}'><Setter Property='Foreground' Value='#FF5A5F'/></Style>" +
+            "<Style x:Key='Plain' TargetType='Button'>" + common + "<Setter Property='Background' Value='Transparent'/><Setter Property='BorderBrush' Value='Transparent'/><Setter Property='BorderThickness' Value='0'/><Setter Property='Padding' Value='0'/>" + BtnTemplate("Button", 8, "") + "</Style>" +
+            "<Style x:Key='Chip' TargetType='ToggleButton'>" + common + "<Setter Property='Background' Value='#1F2B3A'/><Setter Property='BorderBrush' Value='#26364A'/><Setter Property='BorderThickness' Value='1'/><Setter Property='Height' Value='30'/><Setter Property='Padding' Value='11,0'/><Setter Property='FontSize' Value='12.5'/><Setter Property='Margin' Value='0,0,6,6'/>" + BtnTemplate("ToggleButton", 8, checkedChip) + "</Style>" +
+            "<Style x:Key='Fx' TargetType='ToggleButton'>" + common + "<Setter Property='Background' Value='#1F2B3A'/><Setter Property='BorderBrush' Value='#26364A'/><Setter Property='BorderThickness' Value='1'/><Setter Property='Height' Value='78'/><Setter Property='Width' Value='126'/><Setter Property='Padding' Value='8,8,8,10'/><Setter Property='Margin' Value='0,0,8,8'/><Setter Property='HorizontalContentAlignment' Value='Stretch'/><Setter Property='VerticalContentAlignment' Value='Stretch'/>" + BtnTemplate("ToggleButton", 10, checkedFx) + "</Style>" +
             "<Style x:Key='Switch' TargetType='ToggleButton'><Setter Property='Cursor' Value='Hand'/><Setter Property='FocusVisualStyle' Value='{x:Null}'/><Setter Property='Template'><Setter.Value><ControlTemplate TargetType='ToggleButton'>" +
-                "<Grid Width='38' Height='22' Background='Transparent'><Border x:Name='tr' CornerRadius='11' Background='#2E2E31'/>" +
-                "<Ellipse x:Name='th' Width='16' Height='16' Fill='White' HorizontalAlignment='Left' Margin='3,0,0,0'><Ellipse.RenderTransform><TranslateTransform/></Ellipse.RenderTransform></Ellipse></Grid>" +
+                "<Grid Width='44' Height='26' Background='Transparent'><Border x:Name='tr' CornerRadius='13' Background='#34485F'/>" +
+                "<Ellipse x:Name='th' Width='22' Height='22' Fill='White' HorizontalAlignment='Left' Margin='2,0,0,0'><Ellipse.Effect><DropShadowEffect BlurRadius='4' ShadowDepth='1' Opacity='0.35'/></Ellipse.Effect><Ellipse.RenderTransform><TranslateTransform/></Ellipse.RenderTransform></Ellipse></Grid>" +
                 "</ControlTemplate></Setter.Value></Setter></Style>" +
-            "<Style x:Key='FillRB' TargetType='RepeatButton'><Setter Property='Focusable' Value='False'/><Setter Property='Template'><Setter.Value><ControlTemplate TargetType='RepeatButton'><Border Height='3' CornerRadius='1.5' Background='#FF5B1F'/></ControlTemplate></Setter.Value></Setter></Style>" +
+            "<Style x:Key='FillRB' TargetType='RepeatButton'><Setter Property='Focusable' Value='False'/><Setter Property='Template'><Setter.Value><ControlTemplate TargetType='RepeatButton'><Border Height='4' CornerRadius='2' Background='#1A9FFF'/></ControlTemplate></Setter.Value></Setter></Style>" +
             "<Style x:Key='EmptyRB' TargetType='RepeatButton'><Setter Property='Focusable' Value='False'/><Setter Property='Template'><Setter.Value><ControlTemplate TargetType='RepeatButton'><Border Background='Transparent'/></ControlTemplate></Setter.Value></Setter></Style>" +
             "<Style x:Key='Range' TargetType='Slider'><Setter Property='IsSnapToTickEnabled' Value='True'/><Setter Property='TickFrequency' Value='1'/><Setter Property='IsMoveToPointEnabled' Value='True'/><Setter Property='Cursor' Value='Hand'/><Setter Property='FocusVisualStyle' Value='{x:Null}'/>" +
-                "<Setter Property='Template'><Setter.Value><ControlTemplate TargetType='Slider'><Grid Height='22' Background='Transparent'><Border Height='3' CornerRadius='1.5' Background='#2E2E31' VerticalAlignment='Center'/>" +
+                "<Setter Property='Template'><Setter.Value><ControlTemplate TargetType='Slider'><Grid Height='22' Background='Transparent'><Border Height='4' CornerRadius='2' Background='#34485F' VerticalAlignment='Center'/>" +
                 "<Track x:Name='PART_Track'><Track.DecreaseRepeatButton><RepeatButton Command='Slider.DecreaseLarge' Style='{StaticResource FillRB}'/></Track.DecreaseRepeatButton>" +
                 "<Track.IncreaseRepeatButton><RepeatButton Command='Slider.IncreaseLarge' Style='{StaticResource EmptyRB}'/></Track.IncreaseRepeatButton>" +
-                "<Track.Thumb><Thumb><Thumb.Template><ControlTemplate TargetType='Thumb'><Ellipse Width='14' Height='14' Fill='#ECEAE6' Stroke='#0E0E0F' StrokeThickness='2'/></ControlTemplate></Thumb.Template></Thumb></Track.Thumb></Track></Grid>" +
+                "<Track.Thumb><Thumb><Thumb.Template><ControlTemplate TargetType='Thumb'><Ellipse Width='20' Height='20' Fill='White'><Ellipse.Effect><DropShadowEffect BlurRadius='5' ShadowDepth='1' Opacity='0.45'/></Ellipse.Effect></Ellipse></ControlTemplate></Thumb.Template></Thumb></Track.Thumb></Track></Grid>" +
                 "</ControlTemplate></Setter.Value></Setter></Style>" +
-            "<Style x:Key='Input' TargetType='TextBox'><Setter Property='Foreground' Value='#ECEAE6'/><Setter Property='CaretBrush' Value='#ECEAE6'/><Setter Property='Height' Value='36'/><Setter Property='VerticalContentAlignment' Value='Center'/><Setter Property='Template'><Setter.Value><ControlTemplate TargetType='TextBox'>" +
-                "<Border x:Name='b' CornerRadius='6' Background='#19191A' BorderBrush='#323235' BorderThickness='1' Padding='10,0'><ScrollViewer x:Name='PART_ContentHost' VerticalAlignment='Center'/></Border>" +
-                "<ControlTemplate.Triggers><Trigger Property='IsKeyboardFocused' Value='True'><Setter TargetName='b' Property='BorderBrush' Value='#FF5B1F'/></Trigger></ControlTemplate.Triggers></ControlTemplate></Setter.Value></Setter></Style>" +
+            "<Style x:Key='Input' TargetType='TextBox'><Setter Property='Foreground' Value='#EEF3F7'/><Setter Property='CaretBrush' Value='#EEF3F7'/><Setter Property='Height' Value='36'/><Setter Property='VerticalContentAlignment' Value='Center'/><Setter Property='Template'><Setter.Value><ControlTemplate TargetType='TextBox'>" +
+                "<Border x:Name='b' CornerRadius='8' Background='#1F2B3A' BorderBrush='#34485F' BorderThickness='1' Padding='10,0'><ScrollViewer x:Name='PART_ContentHost' VerticalAlignment='Center'/></Border>" +
+                "<ControlTemplate.Triggers><Trigger Property='IsKeyboardFocused' Value='True'><Setter TargetName='b' Property='BorderBrush' Value='#1A9FFF'/></Trigger></ControlTemplate.Triggers></ControlTemplate></Setter.Value></Setter></Style>" +
             "<Style TargetType='ScrollBar'><Setter Property='Width' Value='10'/><Setter Property='MinWidth' Value='10'/><Setter Property='Template'><Setter.Value><ControlTemplate TargetType='ScrollBar'>" +
-                "<Track x:Name='PART_Track' IsDirectionReversed='True'><Track.Thumb><Thumb><Thumb.Template><ControlTemplate TargetType='Thumb'><Border CornerRadius='4' Background='#2B2B2E' Margin='2'/></ControlTemplate></Thumb.Template></Thumb></Track.Thumb></Track>" +
+                "<Track x:Name='PART_Track' IsDirectionReversed='True'><Track.Thumb><Thumb><Thumb.Template><ControlTemplate TargetType='Thumb'><Border CornerRadius='4' Background='#2E4058' Margin='2'/></ControlTemplate></Thumb.Template></Thumb></Track.Thumb></Track>" +
                 "</ControlTemplate></Setter.Value></Setter></Style>" +
             "</ResourceDictionary>";
         return (ResourceDictionary)XamlReader.Parse(xaml);
@@ -133,9 +133,9 @@ class Seg : Border
     public int Index = -1; public event Action<int> Changed = delegate { };
     public Seg(bool stretch)
     {
-        Background = T.Panel2; BorderBrush = T.Line; BorderThickness = new Thickness(1); CornerRadius = new CornerRadius(7); Padding = new Thickness(3);
+        Background = T.Panel2; BorderBrush = T.Line; BorderThickness = new Thickness(1); CornerRadius = new CornerRadius(9); Padding = new Thickness(2);
         HorizontalAlignment = stretch ? HorizontalAlignment.Stretch : HorizontalAlignment.Left;
-        thumb = new Border { Background = T.Panel3, BorderBrush = T.Line2, BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(5), HorizontalAlignment = HorizontalAlignment.Left, RenderTransform = new TranslateTransform() };
+        thumb = new Border { Background = T.B("#3D5470"), BorderBrush = T.B("#4A6280"), BorderThickness = new Thickness(0.5), CornerRadius = new CornerRadius(7), Effect = new System.Windows.Media.Effects.DropShadowEffect { BlurRadius = 4, ShadowDepth = 1, Opacity = .3 }, HorizontalAlignment = HorizontalAlignment.Left, RenderTransform = new TranslateTransform() };
         Child = grid; grid.Children.Add(thumb);
         SizeChanged += (s, e) => Place(false);
         IsVisibleChanged += (s, e) => { if (IsVisible) Dispatcher.BeginInvoke(new Action(() => Place(false)), DispatcherPriority.Loaded); };
@@ -183,9 +183,9 @@ class SwitchButton : ToggleButton
         bool on = IsChecked == true;
         var tt = th.RenderTransform as TranslateTransform;
         if (tt == null || tt.IsFrozen) { tt = new TranslateTransform(); th.RenderTransform = tt; } // objetos do template vêm congelados
-        if (anim) T.Anim(tt, TranslateTransform.XProperty, on ? 16 : 0, 180, T.EaseOut); else { tt.BeginAnimation(TranslateTransform.XProperty, null); tt.X = on ? 16 : 0; }
-        var brush = tr.Background as SolidColorBrush; if (brush == null || brush.IsFrozen) { brush = new SolidColorBrush(brush != null ? brush.Color : T.C("#2E2E31")); tr.Background = brush; }
-        var to = on ? T.C("#FF5B1F") : T.C("#2E2E31");
+        if (anim) T.Anim(tt, TranslateTransform.XProperty, on ? 18 : 0, 180, T.EaseOut); else { tt.BeginAnimation(TranslateTransform.XProperty, null); tt.X = on ? 18 : 0; }
+        var brush = tr.Background as SolidColorBrush; if (brush == null || brush.IsFrozen) { brush = new SolidColorBrush(brush != null ? brush.Color : T.C("#34485F")); tr.Background = brush; }
+        var to = on ? T.C("#30D158") : T.C("#34485F");
         if (anim && !T.Reduce) { var ca = new ColorAnimationUsingKeyFrames(); ca.KeyFrames.Add(new SplineColorKeyFrame(to, KeyTime.FromTimeSpan(TimeSpan.FromMilliseconds(160)), new KeySpline(0.25, 0.1, 0.25, 1))); brush.BeginAnimation(SolidColorBrush.ColorProperty, ca); } else { brush.BeginAnimation(SolidColorBrush.ColorProperty, null); brush.Color = to; }
     }
 }
