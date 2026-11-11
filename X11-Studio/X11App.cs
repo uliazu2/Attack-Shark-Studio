@@ -345,6 +345,7 @@ class X11Window : Window
 
     // ============================================================ DPI
     class StageRow { public Border Card; public Ellipse Dot, Current; public Slider Slider; public TextBlock Value; public ToggleButton On; }
+    TextBlock dpiBig, dpiStageTxt; Ellipse dpiDot;
     readonly List<StageRow> stages = new List<StageRow>(); Seg indicatorSeg, lodSeg; ToggleButton motionSw, snapSw, rippleSw; DispatcherTimer dpiTimer;
     FrameworkElement BuildDpi()
     {
@@ -359,7 +360,7 @@ class X11Window : Window
             dotBtn.Click += (s, e) => { int c; if (st != null && PickColor(st.Dpi.Color[k], out c)) { st.Dpi.Color[k] = c; ShowDpi(); PushDpi(); } };
             r.Slider = Range(0, DpiSteps.Length - 1); r.Slider.Margin = new Thickness(14, 0, 14, 0);
             r.Value = new TextBlock { Width = 74, TextAlignment = TextAlignment.Right, FontWeight = FontWeights.SemiBold, FontSize = 15, VerticalAlignment = VerticalAlignment.Center };
-            r.Slider.ValueChanged += (s, e) => { r.Value.Text = DpiSteps[(int)r.Slider.Value].ToString("N0", new System.Globalization.CultureInfo("pt-BR")); if (!showing && st != null) { st.Dpi.Dpi[k] = DpiSteps[(int)r.Slider.Value]; PushDpi(); } };
+            r.Slider.ValueChanged += (s, e) => { r.Value.Text = DpiSteps[(int)r.Slider.Value].ToString("N0", new System.Globalization.CultureInfo("pt-BR")); if (!showing && st != null) { st.Dpi.Dpi[k] = DpiSteps[(int)r.Slider.Value]; UpdateReadout(); PushDpi(); } };
             r.On = new SwitchButton { VerticalAlignment = VerticalAlignment.Center };
             r.On.Click += (s, e) => { if (st == null) return; int mask = st.Dpi.ActiveStages; mask = r.On.IsChecked == true ? mask | (1 << k) : mask & ~(1 << k); if (mask == 0) { r.On.IsChecked = true; return; } st.Dpi.ActiveStages = mask; if ((mask & (1 << (st.Dpi.CurrentStage - 1))) == 0) st.Dpi.CurrentStage = Enumerable.Range(0, 8).First(x => (mask & (1 << x)) != 0) + 1; ShowDpi(); PushDpi(); };
             var g = new Grid(); g.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto }); g.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto }); g.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
@@ -384,8 +385,24 @@ class X11Window : Window
                 ToggleRow("Controle de ondulação", "Suaviza tremidas em DPI alto", rippleSw))), "Sensor");
         dpiTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(350) };
         dpiTimer.Tick += async (s, e) => { dpiTimer.Stop(); await Save(st.Dpi.Build(), null); };
-        var left = Stack(16, Card(mouseDpi), sensor);
+        mouseDpi.MaxHeight = 250;
+        dpiDot = new Ellipse { Width = 12, Height = 12, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 6, 10, 0) };
+        dpiBig = new TextBlock { FontFamily = T.Display, FontSize = 38, FontWeight = FontWeights.SemiBold };
+        var unit = new TextBlock { Text = "DPI", Foreground = T.Muted, FontSize = 15, VerticalAlignment = VerticalAlignment.Bottom, Margin = new Thickness(8, 0, 0, 8) };
+        var readoutRow = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Center, Children = { dpiDot, dpiBig, unit } };
+        dpiStageTxt = new TextBlock { Foreground = T.Muted, FontSize = 12.5, HorizontalAlignment = HorizontalAlignment.Center };
+        var readout = new StackPanel { Margin = new Thickness(0, 14, 0, 0), Children = { readoutRow, dpiStageTxt } };
+        var left = Stack(16, Card(Stack(0, mouseDpi, readout)), sensor);
         return TwoCols(left, 330, Card(list, "Estágios de DPI"));
+    }
+    void UpdateReadout()
+    {
+        if (st == null) return;
+        int cur = Math.Max(1, Math.Min(8, st.Dpi.CurrentStage)), active = Enumerable.Range(0, 8).Count(i => (st.Dpi.ActiveStages & (1 << i)) != 0);
+        dpiBig.Text = st.Dpi.Dpi[cur - 1].ToString("N0", new System.Globalization.CultureInfo("pt-BR"));
+        dpiDot.Fill = new SolidColorBrush(T.Rgb(st.Dpi.Color[cur - 1], 1));
+        int pos = Enumerable.Range(0, cur).Count(i => (st.Dpi.ActiveStages & (1 << i)) != 0);
+        dpiStageTxt.Text = "Estágio " + pos + " de " + active + " · o botão de DPI troca entre eles";
     }
     void PushDpi() { if (showing) return; dpiTimer.Stop(); dpiTimer.Start(); }
     void ShowDpi()
@@ -402,6 +419,7 @@ class X11Window : Window
         }
         indicatorSeg.Select(Math.Max(0, Math.Min(2, st.Dpi.Indicator - 1)), false); lodSeg.Select(Math.Max(0, Math.Min(2, st.Dpi.LiftOff)), false);
         motionSw.IsChecked = st.Dpi.MotionSync; snapSw.IsChecked = st.Dpi.AngleSnap; rippleSw.IsChecked = st.Dpi.Ripple;
+        UpdateReadout();
         showing = prev;
     }
 
@@ -410,7 +428,7 @@ class X11Window : Window
     static readonly string[] LightNames = { "Desligada", "Fixa", "Respiração", "Neon", "Respiração colorida", "Cor do DPI", "Cor do DPI respirando" };
     FrameworkElement BuildLight()
     {
-        mouseLight = new MouseView(false);
+        mouseLight = new MouseView(false) { MaxHeight = 420 };
         var wrap = new WrapPanel();
         for (int i = 0; i < LightNames.Length; i++)
         {
@@ -468,7 +486,7 @@ class X11Window : Window
     Button saveBtn; int selSlot = 1; ButtonSlot pending; TextBlock btnTitle, btnNow, pendTxt; WrapPanel actionList; Button capBtn; bool capturing; int capMods; StackPanel btnList;
     FrameworkElement BuildButtons()
     {
-        mouseBtn = new MouseView(true); mouseBtn.PartClicked += SelectSlot;
+        mouseBtn = new MouseView(true) { MaxHeight = 330 }; mouseBtn.PartClicked += SelectSlot;
         btnList = new StackPanel();
         btnTitle = new TextBlock { FontSize = 17, FontWeight = FontWeights.SemiBold }; btnNow = Txt("", 12.5, T.Muted);
         actionList = new WrapPanel();

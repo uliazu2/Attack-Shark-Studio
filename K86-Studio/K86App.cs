@@ -87,6 +87,11 @@ class KbView : Viewbox
                 x += w;
             }
         }
+        // marca no topo, como no teclado de verdade
+        var brandMark = new StackPanel { Orientation = Orientation.Horizontal };
+        brandMark.Children.Add(new TextBlock { Text = "ATTACK SHARK", FontSize = 13, FontWeight = FontWeights.SemiBold, Foreground = T.B("#4A4A55"), VerticalAlignment = VerticalAlignment.Bottom, Margin = new Thickness(0, 0, 10, 3) });
+        brandMark.Children.Add(new TextBlock { Text = "K86", FontSize = 26, FontWeight = FontWeights.Bold, FontFamily = T.Display, Foreground = T.B("#6E6E7A") });
+        Canvas.SetLeft(brandMark, .1 * U); Canvas.SetTop(brandMark, .45 * U); cv.Children.Add(brandMark);
         // telinha e botão giratório
         var scrBorder = new Border { Width = 2.7 * U, Height = 1.52 * U, CornerRadius = new CornerRadius(6), Background = Brushes.Black, BorderBrush = T.B("#26262E"), BorderThickness = new Thickness(2), ClipToBounds = true };
         Screen = new Image { Stretch = Stretch.UniformToFill }; RenderOptions.SetBitmapScalingMode(Screen, BitmapScalingMode.HighQuality); scrBorder.Child = Screen;
@@ -468,8 +473,7 @@ class MainWindow : Window
         fxMark = Swatches(sw, c => { effect.Color = c; rainbowSw.IsChecked = false; Push(); });
         colorCard = Card(Stack(0, ToggleRow("Arco-íris", "Todas as cores ao mesmo tempo", rainbowSw), new Border { Height = 1, Background = T.Line }, sw));
         syncTxt = Txt("", 13, T.Muted); syncCard = Card(syncTxt);
-        var right = Stack(16, controls, colorCard, syncCard);
-        var grid = Cols(1.35, Card(wrap, "Efeito"), 1, right);
+        var grid = Stack(16, Card(wrap, "Efeito"), Cols(1, controls, 1, colorCard), syncCard);
         pushTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(140) };
         pushTimer.Tick += async (s, e) =>
         {
