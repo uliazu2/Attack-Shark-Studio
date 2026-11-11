@@ -101,7 +101,7 @@ class MouseView : Viewbox
     {
         this.interactive = interactive; Stretch = Stretch.Uniform;
         var cv = new Canvas { Width = 260, Height = 430 };
-        var glow = new Path { Data = Geometry.Parse("M130,12 C60,12 30,82 30,172 L30,300 C30,372 75,414 130,414 C185,414 230,372 230,300 L230,172 C230,82 200,12 130,12 Z"), Stroke = Glow, StrokeThickness = 14, Effect = new BlurEffect { Radius = 28 } };
+        var glow = new Path { Data = Geometry.Parse("M130,12 C60,12 30,82 30,172 L30,300 C30,372 75,414 130,414 C185,414 230,372 230,300 L230,172 C230,82 200,12 130,12 Z"), Stroke = Glow, StrokeThickness = 14, Effect = new BlurEffect { Radius = 18 } };
         cv.Children.Add(glow);
         var body = new Path { Data = glow.Data, Fill = new LinearGradientBrush(T.C("#1E1E25"), T.C("#121217"), 90), Stroke = T.Line2, StrokeThickness = 1.5, Effect = new DropShadowEffect { BlurRadius = 30, ShadowDepth = 12, Opacity = .55, Direction = 270 } };
         cv.Children.Add(body);
@@ -279,7 +279,7 @@ class X11Window : Window
         var status = new Border { CornerRadius = new CornerRadius(12), BorderBrush = T.Line, BorderThickness = new Thickness(1), Background = T.Panel, Padding = new Thickness(12), VerticalAlignment = VerticalAlignment.Bottom }; DockPanel.SetDock(status, Dock.Bottom);
         dot = new Ellipse { Width = 8, Height = 8, Fill = T.Faint, Margin = new Thickness(0, 0, 9, 0) };
         stTitle = new TextBlock { Text = "Procurando…", FontWeight = FontWeights.Medium }; stSub = Txt("Ligue o receptor ou o cabo", 12, T.Muted); stSub.Margin = new Thickness(0, 4, 0, 0);
-        battBar = new Border { Height = 4, CornerRadius = new CornerRadius(2), Background = T.Ok, HorizontalAlignment = HorizontalAlignment.Left, Width = 0 };
+        battBar = new Border { Height = 4, CornerRadius = new CornerRadius(2), Background = T.Ok, RenderTransformOrigin = new Point(0, .5), RenderTransform = new ScaleTransform(0, 1) };
         battTxt = Txt("Bateria: aguardando o mouse", 12, T.Muted);
         var battTrack = new Border { Height = 4, CornerRadius = new CornerRadius(2), Background = T.B("#2A2A32"), Child = battBar, Margin = new Thickness(0, 10, 0, 6) };
         status.Child = Stack(0, Row(0, dot, stTitle), stSub, battTrack, battTxt);
@@ -298,9 +298,9 @@ class X11Window : Window
         for (int i = 0; i < navBtns.Count; i++)
         {
             var b = navBtns[i]; bool on = (string)b.Tag == key; b.Foreground = on ? T.Text : T.Muted; ((Path)((StackPanel)b.Content).Children[0]).Stroke = on ? T.Text : T.Muted;
-            if (on) T.Anim((TranslateTransform)navInd.RenderTransform, TranslateTransform.YProperty, i * 38, 220, T.InOut);
+            if (on) T.Anim((TranslateTransform)navInd.RenderTransform, TranslateTransform.YProperty, i * 38, 160, T.InOut);
         }
-        foreach (var kv in pageMap) { bool on = kv.Key == key; kv.Value.Visibility = on ? Visibility.Visible : Visibility.Collapsed; if (on) { kv.Value.Opacity = 0; T.Anim(kv.Value, OpacityProperty, 1, 160, T.EaseOut); } }
+        foreach (var kv in pageMap) { bool on = kv.Key == key; kv.Value.Visibility = on ? Visibility.Visible : Visibility.Collapsed; }
     }
 
     // ---------- conexão
@@ -319,13 +319,13 @@ class X11Window : Window
         if (be.Battery < 0) return;
         battTxt.Text = "Bateria: " + be.Battery + "%" + (be.BatteryStatus == 3 ? " · carregando" : be.BatteryStatus == 2 ? " · carregada" : "");
         battBar.Background = be.Battery <= 15 ? T.Danger : be.Battery <= 35 ? T.B("#FBBF24") : T.Ok;
-        T.Anim(battBar, WidthProperty, (battBar.Parent as Border).ActualWidth * be.Battery / 100.0, 300, T.EaseOut);
+        T.Anim((ScaleTransform)battBar.RenderTransform, ScaleTransform.ScaleXProperty, be.Battery / 100.0, 250, T.EaseOut);
     }
-    async Task Save(byte[] packet, string ok)
+    async Task<bool> Save(byte[] packet, string ok)
     {
-        if (!connected) { Toast("O X11 não está conectado.", true); return; }
-        try { await Task.Run(() => be.Write(packet)); if (ok != null) Toast(ok, false); }
-        catch (Exception ex) { Toast(ex.Message, true); }
+        if (!connected) { Toast("O X11 não está conectado.", true); return false; }
+        try { await Task.Run(() => be.Write(packet)); if (ok != null) Toast(ok, false); return true; }
+        catch (Exception ex) { Toast(ex.Message, true); return false; }
     }
     void Toast(string msg, bool err)
     {
@@ -446,7 +446,7 @@ class X11Window : Window
     readonly System.Diagnostics.Stopwatch clock = System.Diagnostics.Stopwatch.StartNew();
     void OnFrame(object s, EventArgs e)
     {
-        if (st == null) return;
+        if (st == null || page == "desempenho" || WindowState == WindowState.Minimized) return;
         double t = T.Reduce ? 0 : clock.Elapsed.TotalSeconds, br = st.Light.Brightness / 8.0, sp = .3 + st.Light.Speed * .35;
         int stageColor = st.Dpi.Color[Math.Max(0, Math.Min(7, st.Dpi.CurrentStage - 1))];
         Color c;
@@ -460,11 +460,12 @@ class X11Window : Window
             case 5: c = T.Rgb(stageColor, br); break;
             default: c = T.Rgb(stageColor, br * (.15 + .85 * (.5 - .5 * Math.Cos(t * sp * 1.6)))); break;
         }
-        foreach (var m in new[] { mouseDpi, mouseLight, mouseBtn }) { if (m == null) continue; if (m.Glow.Color != c) { m.Glow.Color = c; m.Logo.Color = c; } }
+        var view = page == "dpi" ? mouseDpi : page == "luz" ? mouseLight : page == "botoes" ? mouseBtn : null; // só o desenho que está na tela
+        if (view != null && view.Glow.Color != c) { view.Glow.Color = c; view.Logo.Color = c; }
     }
 
     // ============================================================ BOTÕES
-    int selSlot = 1; ButtonSlot pending; TextBlock btnTitle, btnNow, pendTxt; WrapPanel actionList; Button capBtn; bool capturing; int capMods; StackPanel btnList;
+    Button saveBtn; int selSlot = 1; ButtonSlot pending; TextBlock btnTitle, btnNow, pendTxt; WrapPanel actionList; Button capBtn; bool capturing; int capMods; StackPanel btnList;
     FrameworkElement BuildButtons()
     {
         mouseBtn = new MouseView(true); mouseBtn.PartClicked += SelectSlot;
@@ -480,7 +481,7 @@ class X11Window : Window
         capBtn = new Button { Style = S("Btn"), Height = 56, HorizontalAlignment = HorizontalAlignment.Stretch, Background = T.Panel2, BorderBrush = T.Line2, Content = Txt("Ou clique aqui e aperte uma tecla/atalho do teclado", 14, T.Muted) };
         capBtn.Click += (s, e) => { capturing = true; capMods = 0; capBtn.BorderBrush = T.Accent; capBtn.Background = T.AccentSoft; capBtn.Content = Txt("Aperte a tecla ou o atalho…", 14); Keyboard.Focus(this); };
         pendTxt = Txt("", 12.5, T.Muted); pendTxt.VerticalAlignment = VerticalAlignment.Center;
-        var save = Btn("Salvar no mouse", "Primary"); save.Click += async (s, e) => await SaveButton(false);
+        var save = Btn("Salvar no mouse", "Primary"); saveBtn = save; save.Click += async (s, e) => await SaveButton(false);
         var restore = Btn("Voltar ao padrão", "Ghost"); restore.Click += async (s, e) => await SaveButton(true);
         var actions = new DockPanel(); DockPanel.SetDock(pendTxt, Dock.Right); actions.Children.Add(pendTxt); actions.Children.Add(Row(8, save, restore));
         var insp = Card(Stack(14, Stack(2, Txt("Botão escolhido", 12.5, T.Muted), btnTitle, btnNow), Sep(), actionList, capBtn, actions));
@@ -550,8 +551,8 @@ class X11Window : Window
         for (int i = 0; i < Buttons.PhysicalSlots.Length; i++)
         {
             int slot = Buttons.PhysicalSlots[i]; bool on = slot == selSlot;
-            var dp = new DockPanel(); var v = Txt(Describe(st.Buttons[slot - 1]), 12, T.Muted); v.TextWrapping = TextWrapping.NoWrap; DockPanel.SetDock(v, Dock.Right); dp.Children.Add(v);
-            dp.Children.Add(new TextBlock { Text = Buttons.PhysicalNames[i], Foreground = on ? T.Text : T.Muted, VerticalAlignment = VerticalAlignment.Center });
+            var dp = new DockPanel(); var v = Txt(Describe(st.Buttons[slot - 1]), 12, T.Muted); v.TextWrapping = TextWrapping.NoWrap; v.TextTrimming = TextTrimming.CharacterEllipsis; v.MaxWidth = 150; v.Margin = new Thickness(8, 0, 0, 0); v.ToolTip = Describe(st.Buttons[slot - 1]); DockPanel.SetDock(v, Dock.Right); dp.Children.Add(v);
+            dp.Children.Add(new TextBlock { Text = Buttons.PhysicalNames[i], Foreground = on ? T.Text : T.Muted, VerticalAlignment = VerticalAlignment.Center, TextTrimming = TextTrimming.CharacterEllipsis });
             var b = new Button { Style = S("Plain"), Height = 38, Padding = new Thickness(12, 0, 12, 0), HorizontalContentAlignment = HorizontalAlignment.Stretch, Content = dp, Margin = new Thickness(0, 0, 0, 4),
                 Background = on ? T.Panel3 : Brushes.Transparent, BorderBrush = on ? T.Line : Brushes.Transparent, BorderThickness = new Thickness(1) };
             b.Click += (s, e) => SelectSlot(slot); btnList.Children.Add(b);
@@ -566,8 +567,8 @@ class X11Window : Window
         if (selSlot == 1 && slot.Action != 0x02 && !restore)
         { if (MessageBox.Show(this, "Você está trocando o clique esquerdo. Se ele deixar de clicar, use o teclado (Tab/Enter) para voltar aqui e restaurar. Continuar?", "X11 Studio", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return; }
         var copy = st.Buttons.Select(b => new ButtonSlot(b.Action, b.Mods, b.Key)).ToArray(); copy[selSlot - 1] = slot;
-        await Save(Buttons.Build(st.Profile, copy), restore ? "Botão voltou ao padrão" : "Botão salvo no mouse");
-        st.Buttons = copy; SelectSlot(selSlot);
+        if (!await Save(Buttons.Build(st.Profile, copy), restore ? "Botão voltou ao padrão" : "Botão salvo no mouse")) return;
+        st.Buttons = copy; SelectSlot(selSlot); if (!restore) T.Confirm(saveBtn, "Salvo");
     }
 
     // ============================================================ DESEMPENHO

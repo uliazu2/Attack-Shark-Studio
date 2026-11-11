@@ -67,9 +67,11 @@ class KbView : Viewbox
     {
         this.interactive = interactive; Stretch = Stretch.Uniform; StretchDirection = StretchDirection.Both;
         var shell = new Border { CornerRadius = new CornerRadius(20), Padding = new Thickness(16), BorderBrush = T.Line2, BorderThickness = new Thickness(1),
-            Background = new LinearGradientBrush(T.C("#18181E"), T.C("#101014"), 90), Effect = new DropShadowEffect { BlurRadius = 40, ShadowDepth = 14, Opacity = .55, Direction = 270 } };
+            Background = new LinearGradientBrush(T.C("#18181E"), T.C("#101014"), 90) };
+        // a sombra fica numa camada própria: se ficasse no contorno, seria refeita a cada quadro da prévia das luzes
+        var shadow = new Border { CornerRadius = new CornerRadius(20), Background = T.B("#101014"), Effect = new DropShadowEffect { BlurRadius = 40, ShadowDepth = 14, Opacity = .55, Direction = 270 } };
         var cv = new Canvas { Width = W * U, Height = H * U };
-        shell.Child = cv; Child = shell;
+        shell.Child = cv; var layers = new Grid(); layers.Children.Add(shadow); layers.Children.Add(shell); Child = layers;
         for (int r = 0; r < Rows.Length; r++)
         {
             double x = 0, y = TOP + r + (r > 0 ? .25 : 0);
@@ -89,7 +91,7 @@ class KbView : Viewbox
         var scrBorder = new Border { Width = 2.7 * U, Height = 1.52 * U, CornerRadius = new CornerRadius(6), Background = Brushes.Black, BorderBrush = T.B("#26262E"), BorderThickness = new Thickness(2), ClipToBounds = true };
         Screen = new Image { Stretch = Stretch.UniformToFill }; RenderOptions.SetBitmapScalingMode(Screen, BitmapScalingMode.HighQuality); scrBorder.Child = Screen;
         Canvas.SetLeft(scrBorder, 11.2 * U); Canvas.SetTop(scrBorder, .05 * U); cv.Children.Add(scrBorder);
-        var glow = new Ellipse { Width = 1.5 * U, Height = 1.5 * U, Fill = KnobGlow, Effect = new BlurEffect { Radius = 22 } };
+        var glow = new Ellipse { Width = 1.5 * U, Height = 1.5 * U, Fill = KnobGlow, Effect = new BlurEffect { Radius = 18 } };
         Canvas.SetLeft(glow, 16.15 * U); Canvas.SetTop(glow, .02 * U); cv.Children.Add(glow);
         Knob = new Ellipse { Width = 1.5 * U, Height = 1.5 * U, Stroke = T.Line2, StrokeThickness = 1, Fill = new RadialGradientBrush(T.C("#3A3A44"), T.C("#15151A")) { GradientOrigin = new Point(.35, .3), Center = new Point(.4, .35), RadiusX = .7, RadiusY = .7 } };
         Canvas.SetLeft(Knob, 16.15 * U); Canvas.SetTop(Knob, .02 * U); cv.Children.Add(Knob);
@@ -128,6 +130,7 @@ class KbView : Viewbox
         k.Cap.BorderBrush = selected ? T.Accent : modified ? T.B("#808B7CFF") : T.B("#10FFFFFF");
         k.Cap.BorderThickness = new Thickness(selected ? 2 : 1);
         k.Sub.Text = sub ?? "";
+        k.Root.ToolTip = string.IsNullOrEmpty(sub) ? null : "Agora faz: " + sub; // texto completo quando não cabe na tecla
     }
 }
 
@@ -366,12 +369,11 @@ class MainWindow : Window
         {
             var b = navBtns[i]; bool on = (string)b.Tag == key;
             b.Foreground = on ? T.Text : T.Muted; ((System.Windows.Shapes.Path)((StackPanel)b.Content).Children[0]).Stroke = on ? T.Text : T.Muted;
-            if (on) T.Anim((TranslateTransform)navInd.RenderTransform, TranslateTransform.YProperty, i * 38, 220, T.InOut);
+            if (on) T.Anim((TranslateTransform)navInd.RenderTransform, TranslateTransform.YProperty, i * 38, 160, T.InOut);
         }
         foreach (var kv in pageMap)
         {
             bool on = kv.Key == key; kv.Value.Visibility = on ? Visibility.Visible : Visibility.Collapsed;
-            if (on) { kv.Value.Opacity = 0; T.Anim(kv.Value, OpacityProperty, 1, 160, T.EaseOut); }
         }
         headerActions.Children.Clear();
         if (key == "teclas") { var b = Btn("Restaurar todas", "Ghost"); b.Click += async (s, e) => { await Run(() => be.ResetKeys(profile), "Todas as teclas voltaram ao original"); await LoadMatrix(); }; headerActions.Children.Add(b); }
@@ -400,7 +402,7 @@ class MainWindow : Window
         await LoadMatrix();
         var st = await Get(() => be.GetSettings()); if (st != null) ShowSettings(st);
     }
-    async Task Run(Action a, string ok) { try { await Task.Run(a); if (ok != null) Toast(ok, false); } catch (Exception ex) { Toast(ex.Message, true); } }
+    async Task<bool> Run(Action a, string ok) { try { await Task.Run(a); if (ok != null) Toast(ok, false); return true; } catch (Exception ex) { Toast(ex.Message, true); return false; } }
     async Task<TR> Get<TR>(Func<TR> f) where TR : class { try { return await Task.Run(f); } catch (Exception ex) { Toast(ex.Message, true); return null; } }
 
     // ------------------------------------------------------------ toasts
@@ -650,7 +652,7 @@ class MainWindow : Window
         actPanels["macro"] = Stack(12, macroPick, macroMode);
         actPanels["off"] = Txt("A tecla não vai fazer nada.", 14, T.Muted);
         var actHost = new Grid(); foreach (var p in actPanels.Values) actHost.Children.Add(p);
-        var save = Btn("Salvar no teclado", "Primary"); save.Click += async (s, e) => await SaveKey();
+        var save = Btn("Salvar no teclado", "Primary"); save.Click += async (s, e) => { if (await SaveKey()) T.Confirm(save, "Salvo"); };
         var restore = Btn("Voltar ao original", "Ghost"); restore.Click += async (s, e) => { if (sel < 0) return; int i = sel; await Run(() => be.SetKey(profile, i, Names.Default(i)), "Tecla voltou ao original"); await LoadMatrix(); SelectKey(i); };
         pendingTxt = Txt("", 12.5, T.Muted); pendingTxt.VerticalAlignment = VerticalAlignment.Center;
         var actions = new DockPanel { Margin = new Thickness(0, 16, 0, 0) }; DockPanel.SetDock(pendingTxt, Dock.Right); actions.Children.Add(pendingTxt); actions.Children.Add(Row(8, save, restore));
@@ -734,13 +736,13 @@ class MainWindow : Window
             b.IsEnabled = ms[i].Events.Count > 0; macroPick.Children.Add(b);
         }
     }
-    async Task SaveKey()
+    async Task<bool> SaveKey()
     {
-        if (sel < 0 || pending == null) { Toast("Escolha primeiro o que a tecla deve fazer.", true); return; }
+        if (sel < 0 || pending == null) { Toast("Escolha primeiro o que a tecla deve fazer.", true); return false; }
         var code = pending; int idx = sel, prof = profile;
         if (code[0] == 9) { var m = Macros()[code[2]]; var evs = m.Events; int rep = m.Repeat; await Run(() => be.SetMacro(code[2], rep, evs), null); }
-        await Run(() => be.SetKey(prof, idx, code), "Tecla salva no teclado");
-        await LoadMatrix(); SelectKey(idx);
+        bool ok = await Run(() => be.SetKey(prof, idx, code), "Tecla salva no teclado");
+        await LoadMatrix(); SelectKey(idx); return ok;
     }
 
     // ============================================================ MACROS
@@ -781,7 +783,7 @@ class MainWindow : Window
     FrameworkElement BuildMacros()
     {
         slots = new StackPanel();
-        macroName = new TextBox { Style = S("Input") }; macroName.LostFocus += (s, e) => { var m = Macros()[curMacro]; m.Name = macroName.Text.Trim() == "" ? "Macro " + (curMacro + 1) : macroName.Text.Trim(); SaveMacros(); RenderSlots(); };
+        macroName = new TextBox { Style = S("Input"), MaxLength = 24 }; macroName.LostFocus += (s, e) => { var m = Macros()[curMacro]; m.Name = macroName.Text.Trim() == "" ? "Macro " + (curMacro + 1) : macroName.Text.Trim(); SaveMacros(); RenderSlots(); };
         recDot = new Ellipse { Width = 12, Height = 12, Fill = T.Danger }; recTxt = new TextBlock { Text = "Gravar", Margin = new Thickness(8, 0, 0, 0) };
         recBtn = new Button { Style = S("Btn"), Content = Row(0, recDot, recTxt), Margin = new Thickness(8, 0, 0, 0) }; recBtn.Click += (s, e) => { if (recording) StopRec(); else StartRec(); };
         var clr = Btn("Limpar", "Ghost"); clr.Margin = new Thickness(6, 0, 0, 0); clr.Click += (s, e) => { Macros()[curMacro].Events.Clear(); SaveMacros(); RenderMacro(); RenderSlots(); };
@@ -793,7 +795,7 @@ class MainWindow : Window
         var opts = new DockPanel(); var rep = Row(8, Txt("Repetir", 14, T.Muted), repeatBox, Txt("vez(es)", 14, T.Muted)); DockPanel.SetDock(rep, Dock.Right); opts.Children.Add(rep);
         opts.Children.Add(Row(8, fixedSw, Txt("Atraso fixo de", 14), fixedMs, Txt("ms", 14, T.Muted)));
         var send = Btn("Enviar ao teclado", "Primary");
-        send.Click += async (s, e) => { var m = Macros()[curMacro]; if (m.Events.Count == 0) { Toast("Essa macro está vazia.", true); return; } int idx = curMacro; await Run(() => be.SetMacro(idx, m.Repeat, m.Events), "Macro enviada ao teclado"); };
+        send.Click += async (s, e) => { var m = Macros()[curMacro]; if (m.Events.Count == 0) { Toast("Essa macro está vazia.", true); return; } int idx = curMacro; if (await Run(() => be.SetMacro(idx, m.Repeat, m.Events), "Macro enviada ao teclado")) T.Confirm(send, "Enviada"); };
         var hint = Txt("Depois, em Teclas, escolha \"Macro\" para colocar numa tecla.", 12.5, T.Muted);
         var editor = Card(Stack(16, top, tlBorder, opts, Row(12, send, hint)));
         blink = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(500) }; blink.Tick += (s, e) => recDot.Opacity = recDot.Opacity > .5 ? .25 : 1;
@@ -808,8 +810,8 @@ class MainWindow : Window
         for (int i = 0; i < ms.Count; i++)
         {
             int k = i; bool on = i == curMacro;
-            var dp = new DockPanel(); var cnt = Txt(ms[i].Events.Count > 0 ? (ms[i].Events.Count + 1) / 2 + " teclas" : "vazia", 11.5, T.Faint); DockPanel.SetDock(cnt, Dock.Right); cnt.VerticalAlignment = VerticalAlignment.Center;
-            dp.Children.Add(cnt); dp.Children.Add(new TextBlock { Text = ms[i].Name, VerticalAlignment = VerticalAlignment.Center, Foreground = on ? T.Text : T.Muted });
+            var dp = new DockPanel(); var cnt = Txt(ms[i].Events.Count > 0 ? ((ms[i].Events.Count + 1) / 2 == 1 ? "1 tecla" : (ms[i].Events.Count + 1) / 2 + " teclas") : "vazia", 11.5, T.Faint); DockPanel.SetDock(cnt, Dock.Right); cnt.VerticalAlignment = VerticalAlignment.Center;
+            dp.Children.Add(cnt); dp.Children.Add(new TextBlock { Text = ms[i].Name, VerticalAlignment = VerticalAlignment.Center, Foreground = on ? T.Text : T.Muted, TextTrimming = TextTrimming.CharacterEllipsis });
             var b = new Button { Style = S("Plain"), Height = 40, Padding = new Thickness(12, 0, 12, 0), HorizontalContentAlignment = HorizontalAlignment.Stretch, Content = dp, Margin = new Thickness(0, 0, 0, 4),
                 Background = on ? T.Panel3 : Brushes.Transparent, BorderBrush = on ? T.Line : Brushes.Transparent, BorderThickness = new Thickness(1) };
             b.Click += (s, e) => { if (recording) StopRec(); curMacro = k; RenderSlots(); RenderMacro(); };
@@ -854,7 +856,7 @@ class MainWindow : Window
         if (ev.Count > 0) { ev[ev.Count - 1].Delay = FixedDelay() ?? (int)Math.Max(1, Math.Min(65535, now - lastT)); var last = timeline.Children[timeline.Children.Count - 1] as Border; if (last != null) ((TextBlock)last.Tag).Text = ev[ev.Count - 1].Delay + "ms"; }
         lastT = now;
         if (ev.Count >= 120) { StopRec(); Toast("Chegou no limite de tamanho da macro.", true); return; }
-        var item = new P.MacroEv { Hid = h, Down = down, Delay = 10 }; ev.Add(item); AddEvChip(item, true);
+        var item = new P.MacroEv { Hid = h, Down = down, Delay = 10 }; ev.Add(item); AddEvChip(item, false);
     }
 
     void HandleKeyDown(object s, KeyEventArgs e)
@@ -889,7 +891,7 @@ class MainWindow : Window
         gifSpeed = Range(2, 60); gifSpeed.Value = 10; gifOut = Txt("100 ms/quadro");
         gifSpeed.ValueChanged += (s, e) => { gifOut.Text = (gifSpeed.Value * 10) + " ms/quadro"; if (anim != null) anim.Interval = TimeSpan.FromMilliseconds(gifSpeed.Value * 10); };
         gifField = Field("Velocidade do GIF", gifOut, gifSpeed); gifField.Visibility = Visibility.Collapsed;
-        sendFill = new Rectangle { Fill = new SolidColorBrush(Color.FromArgb(56, 255, 255, 255)), HorizontalAlignment = HorizontalAlignment.Left, Width = 0, RadiusX = 9, RadiusY = 9 };
+        sendFill = new Rectangle { Fill = new SolidColorBrush(Color.FromArgb(56, 255, 255, 255)), RadiusX = 9, RadiusY = 9, RenderTransformOrigin = new Point(0, .5), RenderTransform = new ScaleTransform(0, 1) };
         sendTxt = new TextBlock { Text = "Enviar para a tela", HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center };
         var sg = new Grid(); sg.Children.Add(sendFill); sg.Children.Add(sendTxt);
         sendScr = new Button { Style = S("Primary"), Content = sg, Padding = new Thickness(0), HorizontalContentAlignment = HorizontalAlignment.Stretch, VerticalContentAlignment = VerticalAlignment.Stretch, IsEnabled = false };
@@ -955,9 +957,9 @@ class MainWindow : Window
         if (frames565.Count == 0) return;
         sendScr.IsEnabled = false; sendTxt.Text = "Preparando…";
         var fr = frames565.ToList(); int slot = slotSeg.Index, delay = (int)gifSpeed.Value;
-        Action<int> prog = p => Dispatcher.BeginInvoke(new Action(() => { sendTxt.Text = p >= 100 ? "Pronto!" : "Enviando… " + p + "%"; T.Anim(sendFill, WidthProperty, sendScr.ActualWidth * p / 100.0, 200, T.Linear); }));
+        Action<int> prog = p => Dispatcher.BeginInvoke(new Action(() => { sendTxt.Text = p >= 100 ? "Pronto!" : "Enviando… " + p + "%"; T.Anim((ScaleTransform)sendFill.RenderTransform, ScaleTransform.ScaleXProperty, p / 100.0, 200, T.Linear); }));
         await Run(() => be.SendScreen(fr, slot, delay, prog), "Imagem enviada para a posição " + (slot + 1));
-        await Task.Delay(600); sendFill.BeginAnimation(WidthProperty, null); sendFill.Width = 0; sendTxt.Text = "Enviar para a tela"; sendScr.IsEnabled = true;
+        await Task.Delay(600); var sf = (ScaleTransform)sendFill.RenderTransform; sf.BeginAnimation(ScaleTransform.ScaleXProperty, null); sf.ScaleX = 0; sendTxt.Text = "Enviar para a tela"; sendScr.IsEnabled = true;
     }
 
     // ============================================================ AJUSTES
@@ -977,7 +979,7 @@ class MainWindow : Window
         {
             int db; int.TryParse(debounceBox.Text, out db);
             var st = new SettingsState { Sleep = (int)sleepR.Value * 60, Deep = (int)deepR.Value * 60, Debounce = Math.Max(1, Math.Min(10, db)), WinLock = winSw.IsChecked == true, Wasd = wasdSw.IsChecked == true };
-            await Run(() => be.SetSettings(st), "Ajustes salvos no teclado");
+            if (await Run(() => be.SetSettings(st), "Ajustes salvos no teclado")) T.Confirm(save, "Salvo");
         };
         var reset = new HoldButton("Segure para restaurar a fábrica");
         reset.Confirmed += async () => { await Run(() => be.Reset(), "Teclado restaurado para a fábrica"); await Task.Delay(1500); RefreshStatus(true); };

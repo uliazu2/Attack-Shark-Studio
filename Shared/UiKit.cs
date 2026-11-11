@@ -48,6 +48,17 @@ static class T
         Func<double, double> f = n => { double k = (n + h * 12) % 12; return l - s * Math.Min(l, 1 - l) * Math.Max(-1, Math.Min(Math.Min(k - 3, 9 - k), 1)); };
         return Color.FromArgb((byte)(Math.Max(0, Math.Min(1, a)) * 255), (byte)(f(0) * 255), (byte)(f(8) * 255), (byte)(f(4) * 255));
     }
+    // troca o texto do botão por "✓ ..." por 1,2 s depois de salvar (feedback de ação ocasional)
+    public static void Confirm(System.Windows.Controls.Button b, string text)
+    {
+        if (b.Tag is string && (string)b.Tag == "confirming") return;
+        var original = b.Content; b.Tag = "confirming";
+        var tb = new System.Windows.Controls.TextBlock { Text = "✓ " + text, Opacity = 0 };
+        b.Content = tb; Anim(tb, UIElement.OpacityProperty, 1, 180, EaseOut);
+        var timer = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromMilliseconds(1200) };
+        timer.Tick += (s, e) => { timer.Stop(); b.Content = original; b.Tag = null; };
+        timer.Start();
+    }
     public static Color Rgb(int c, double a) { return Color.FromArgb((byte)(Math.Max(0, Math.Min(1, a)) * 255), (byte)(c >> 16), (byte)(c >> 8), (byte)c); }
     public static string Hex(int c) { return "#" + (c & 0xFFFFFF).ToString("X6"); }
 
@@ -63,8 +74,8 @@ static class T
     }
     static string Hover(string target)
     {
-        return "<Trigger Property='IsMouseOver' Value='True'><Trigger.EnterActions><BeginStoryboard><Storyboard><DoubleAnimation Storyboard.TargetName='" + target + "' Storyboard.TargetProperty='Opacity' To='1' Duration='0:0:0.15'/></Storyboard></BeginStoryboard></Trigger.EnterActions>" +
-               "<Trigger.ExitActions><BeginStoryboard><Storyboard><DoubleAnimation Storyboard.TargetName='" + target + "' Storyboard.TargetProperty='Opacity' To='0' Duration='0:0:0.15'/></Storyboard></BeginStoryboard></Trigger.ExitActions></Trigger>";
+        return "<Trigger Property='IsMouseOver' Value='True'><Trigger.EnterActions><BeginStoryboard><Storyboard><DoubleAnimationUsingKeyFrames Storyboard.TargetName='" + target + "' Storyboard.TargetProperty='Opacity'><SplineDoubleKeyFrame KeyTime='0:0:0.15' Value='1' KeySpline='0.25,0.1 0.25,1'/></DoubleAnimationUsingKeyFrames></Storyboard></BeginStoryboard></Trigger.EnterActions>" +
+               "<Trigger.ExitActions><BeginStoryboard><Storyboard><DoubleAnimationUsingKeyFrames Storyboard.TargetName='" + target + "' Storyboard.TargetProperty='Opacity'><SplineDoubleKeyFrame KeyTime='0:0:0.15' Value='0' KeySpline='0.25,0.1 0.25,1'/></DoubleAnimationUsingKeyFrames></Storyboard></BeginStoryboard></Trigger.ExitActions></Trigger>";
     }
     static string BtnTemplate(string type, int radius, string extraTriggers)
     {
@@ -153,7 +164,7 @@ class Seg : Border
     {
         if (Index < 0 || Index >= items.Count || items[Index].ActualWidth == 0) return;
         var b = items[Index]; var p = b.TranslatePoint(new Point(0, 0), grid);
-        T.Anim(thumb, WidthProperty, b.ActualWidth, anim ? 220 : 0, T.InOut);
+        thumb.BeginAnimation(WidthProperty, null); thumb.Width = b.ActualWidth; // largura é layout: muda na hora
         T.Anim((TranslateTransform)thumb.RenderTransform, TranslateTransform.XProperty, p.X, anim ? 220 : 0, T.InOut);
         thumb.Height = b.ActualHeight;
     }
@@ -174,7 +185,7 @@ class SwitchButton : ToggleButton
         if (anim) T.Anim(tt, TranslateTransform.XProperty, on ? 16 : 0, 180, T.EaseOut); else { tt.BeginAnimation(TranslateTransform.XProperty, null); tt.X = on ? 16 : 0; }
         var brush = tr.Background as SolidColorBrush; if (brush == null || brush.IsFrozen) { brush = new SolidColorBrush(brush != null ? brush.Color : T.C("#2A2A32")); tr.Background = brush; }
         var to = on ? T.C("#8B7CFF") : T.C("#2A2A32");
-        if (anim && !T.Reduce) brush.BeginAnimation(SolidColorBrush.ColorProperty, new ColorAnimation(to, TimeSpan.FromMilliseconds(160))); else { brush.BeginAnimation(SolidColorBrush.ColorProperty, null); brush.Color = to; }
+        if (anim && !T.Reduce) { var ca = new ColorAnimationUsingKeyFrames(); ca.KeyFrames.Add(new SplineColorKeyFrame(to, KeyTime.FromTimeSpan(TimeSpan.FromMilliseconds(160)), new KeySpline(0.25, 0.1, 0.25, 1))); brush.BeginAnimation(SolidColorBrush.ColorProperty, ca); } else { brush.BeginAnimation(SolidColorBrush.ColorProperty, null); brush.Color = to; }
     }
 }
 
