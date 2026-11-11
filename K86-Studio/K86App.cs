@@ -66,10 +66,10 @@ class KbView : Viewbox
     public KbView(bool interactive)
     {
         this.interactive = interactive; Stretch = Stretch.Uniform; StretchDirection = StretchDirection.Both;
-        var shell = new Border { CornerRadius = new CornerRadius(20), Padding = new Thickness(16), BorderBrush = T.Line2, BorderThickness = new Thickness(1),
-            Background = new LinearGradientBrush(T.C("#18181E"), T.C("#101014"), 90) };
+        var shell = new Border { CornerRadius = new CornerRadius(12), Padding = new Thickness(16), BorderBrush = T.Line2, BorderThickness = new Thickness(1),
+            Background = new LinearGradientBrush(T.C("#19191B"), T.C("#121213"), 90) };
         // a sombra fica numa camada própria: se ficasse no contorno, seria refeita a cada quadro da prévia das luzes
-        var shadow = new Border { CornerRadius = new CornerRadius(20), Background = T.B("#101014"), Effect = new DropShadowEffect { BlurRadius = 40, ShadowDepth = 14, Opacity = .55, Direction = 270 } };
+        var shadow = new Border { CornerRadius = new CornerRadius(12), Background = T.B("#121213"), Effect = new DropShadowEffect { BlurRadius = 40, ShadowDepth = 14, Opacity = .55, Direction = 270 } };
         var cv = new Canvas { Width = W * U, Height = H * U };
         shell.Child = cv; var layers = new Grid(); layers.Children.Add(shadow); layers.Children.Add(shell); Child = layers;
         for (int r = 0; r < Rows.Length; r++)
@@ -89,18 +89,18 @@ class KbView : Viewbox
         }
         // marca no topo, como no teclado de verdade
         var brandMark = new StackPanel { Orientation = Orientation.Horizontal };
-        brandMark.Children.Add(new TextBlock { Text = "ATTACK SHARK", FontSize = 13, FontWeight = FontWeights.SemiBold, Foreground = T.B("#4A4A55"), VerticalAlignment = VerticalAlignment.Bottom, Margin = new Thickness(0, 0, 10, 3) });
-        brandMark.Children.Add(new TextBlock { Text = "K86", FontSize = 26, FontWeight = FontWeights.Bold, FontFamily = T.Display, Foreground = T.B("#6E6E7A") });
+        brandMark.Children.Add(new TextBlock { Text = "ATTACK SHARK", FontSize = 13, FontWeight = FontWeights.SemiBold, Foreground = T.B("#4B4A47"), VerticalAlignment = VerticalAlignment.Bottom, Margin = new Thickness(0, 0, 10, 3) });
+        brandMark.Children.Add(new TextBlock { Text = "K86", FontSize = 26, FontWeight = FontWeights.Bold, FontFamily = T.Display, Foreground = T.B("#6F6D68") });
         Canvas.SetLeft(brandMark, .1 * U); Canvas.SetTop(brandMark, .45 * U); cv.Children.Add(brandMark);
         // telinha e botão giratório
-        var scrBorder = new Border { Width = 2.7 * U, Height = 1.52 * U, CornerRadius = new CornerRadius(6), Background = Brushes.Black, BorderBrush = T.B("#26262E"), BorderThickness = new Thickness(2), ClipToBounds = true };
+        var scrBorder = new Border { Width = 2.7 * U, Height = 1.52 * U, CornerRadius = new CornerRadius(6), Background = Brushes.Black, BorderBrush = T.B("#2B2B2E"), BorderThickness = new Thickness(2), ClipToBounds = true };
         Screen = new Image { Stretch = Stretch.UniformToFill }; RenderOptions.SetBitmapScalingMode(Screen, BitmapScalingMode.HighQuality); scrBorder.Child = Screen;
         Canvas.SetLeft(scrBorder, 11.2 * U); Canvas.SetTop(scrBorder, .05 * U); cv.Children.Add(scrBorder);
         var glow = new Ellipse { Width = 1.5 * U, Height = 1.5 * U, Fill = KnobGlow, Effect = new BlurEffect { Radius = 18 } };
         Canvas.SetLeft(glow, 16.15 * U); Canvas.SetTop(glow, .02 * U); cv.Children.Add(glow);
-        Knob = new Ellipse { Width = 1.5 * U, Height = 1.5 * U, Stroke = T.Line2, StrokeThickness = 1, Fill = new RadialGradientBrush(T.C("#3A3A44"), T.C("#15151A")) { GradientOrigin = new Point(.35, .3), Center = new Point(.4, .35), RadiusX = .7, RadiusY = .7 } };
+        Knob = new Ellipse { Width = 1.5 * U, Height = 1.5 * U, Stroke = T.Line2, StrokeThickness = 1, Fill = new RadialGradientBrush(T.C("#3B3B3E"), T.C("#161617")) { GradientOrigin = new Point(.35, .3), Center = new Point(.4, .35), RadiusX = .7, RadiusY = .7 } };
         Canvas.SetLeft(Knob, 16.15 * U); Canvas.SetTop(Knob, .02 * U); cv.Children.Add(Knob);
-        var notch = new Rectangle { Width = 2, Height = .33 * U, Fill = T.B("#9A9AA6"), RadiusX = 1, RadiusY = 1 };
+        var notch = new Rectangle { Width = 2, Height = .33 * U, Fill = T.B("#9C9A95"), RadiusX = 1, RadiusY = 1 };
         Canvas.SetLeft(notch, 16.9 * U - 1); Canvas.SetTop(notch, .17 * U); cv.Children.Add(notch);
         if (interactive) { Knob.Cursor = Cursors.Hand; Knob.MouseLeftButtonDown += (s, e) => KeyHit(KnobPress); }
     }
@@ -109,11 +109,11 @@ class KbView : Viewbox
     {
         var kv = new KeyVis { Idx = idx, X = x, Y = y, W = w };
         var root = new Grid { Width = w * U - 4, Height = U - 4, RenderTransformOrigin = new Point(.5, .5), RenderTransform = new ScaleTransform(1, 1), Background = Brushes.Transparent };
-        var shadow = new Border { CornerRadius = new CornerRadius(7), Background = T.B("#0B0B0E"), Margin = new Thickness(0, 2, 0, -2) };
-        var cap = new Border { CornerRadius = new CornerRadius(7), BorderThickness = new Thickness(1), BorderBrush = T.B("#10FFFFFF"), Background = new LinearGradientBrush(T.C("#22222A"), T.C("#18181E"), 90) };
+        var shadow = new Border { CornerRadius = new CornerRadius(5), Background = T.B("#0A0A0B"), Margin = new Thickness(0, 2, 0, -2) };
+        var cap = new Border { CornerRadius = new CornerRadius(5), BorderThickness = new Thickness(1), BorderBrush = T.B("#2A2A2C"), Background = new LinearGradientBrush(T.C("#1F1F21"), T.C("#19191B"), 90) };
         kv.LedBrush = new SolidColorBrush(Colors.Transparent);
-        var led = new Border { CornerRadius = new CornerRadius(7), Background = kv.LedBrush };
-        var lbl = new TextBlock { Text = label, FontSize = 11, Foreground = T.B("#C9C9D3"), Margin = new Thickness(7, 5, 4, 0), TextTrimming = TextTrimming.CharacterEllipsis };
+        var led = new Border { CornerRadius = new CornerRadius(5), Background = kv.LedBrush };
+        var lbl = new TextBlock { Text = label, FontSize = 11, Foreground = T.B("#CBC9C4"), Margin = new Thickness(7, 5, 4, 0), TextTrimming = TextTrimming.CharacterEllipsis };
         var sub = new TextBlock { FontSize = 9.5, Foreground = T.Accent, Margin = new Thickness(7, 0, 4, 4), VerticalAlignment = VerticalAlignment.Bottom, TextTrimming = TextTrimming.CharacterEllipsis };
         root.Children.Add(shadow); root.Children.Add(cap); root.Children.Add(led); root.Children.Add(lbl); root.Children.Add(sub);
         kv.Root = root; kv.Cap = cap; kv.Led = led; kv.Label = lbl; kv.Sub = sub;
@@ -132,7 +132,7 @@ class KbView : Viewbox
     public void Mark(int idx, bool selected, bool modified, string sub)
     {
         KeyVis k; if (!Keys.TryGetValue(idx, out k)) return;
-        k.Cap.BorderBrush = selected ? T.Accent : modified ? T.B("#808B7CFF") : T.B("#10FFFFFF");
+        k.Cap.BorderBrush = selected ? T.Accent : modified ? T.B("#99FF5B1F") : T.B("#2A2A2C");
         k.Cap.BorderThickness = new Thickness(selected ? 2 : 1);
         k.Sub.Text = sub ?? "";
         k.Root.ToolTip = string.IsNullOrEmpty(sub) ? null : "Agora faz: " + sub; // texto completo quando não cabe na tecla
@@ -218,9 +218,9 @@ class MainWindow : Window
     static Border Card(UIElement child, string heading = null)
     {
         var sp = new StackPanel();
-        if (heading != null) sp.Children.Add(new TextBlock { Text = heading.ToUpper(), FontSize = 11.5, FontWeight = FontWeights.SemiBold, Foreground = T.Muted, Margin = new Thickness(0, 0, 0, 12) });
+        if (heading != null) sp.Children.Add(new TextBlock { Text = heading.ToUpper(), FontFamily = T.Mono, FontSize = 10.5, Foreground = T.Faint, Margin = new Thickness(0, 0, 0, 14) });
         sp.Children.Add(child);
-        return new Border { Background = T.Panel, BorderBrush = T.Line, BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(14), Padding = new Thickness(18), Child = sp };
+        return new Border { Background = T.Panel, BorderBrush = T.Line, BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(8), Padding = new Thickness(16), Child = sp };
     }
     static Button Btn(string text, string style = "Btn") { return new Button { Content = text, Style = S(style) }; }
     static ToggleButton Switch() { return new SwitchButton { VerticalAlignment = VerticalAlignment.Center }; }
@@ -256,7 +256,7 @@ class MainWindow : Window
         var dp = new DockPanel { LastChildFill = true };
         var head = new DockPanel { Margin = new Thickness(0, 0, 0, 8) }; DockPanel.SetDock(head, Dock.Top);
         var l = Txt(label, 12.5, T.Muted); head.Children.Add(l);
-        if (value != null) { value.HorizontalAlignment = HorizontalAlignment.Right; value.FontSize = 12.5; head.Children.Add(value); }
+        if (value != null) { value.HorizontalAlignment = HorizontalAlignment.Right; value.FontSize = 12; value.FontFamily = T.Mono; head.Children.Add(value); }
         dp.Children.Add(head); dp.Children.Add(control); return dp;
     }
     static Grid ToggleRow(string titleT, string sub, UIElement right)
@@ -282,16 +282,16 @@ class MainWindow : Window
         Grid.SetColumn(main, 1); shell.Children.Add(main);
         var mainStack = new StackPanel { MaxWidth = 1100 }; main.Content = mainStack;
 
-        banner = new Border { Visibility = Visibility.Collapsed, CornerRadius = new CornerRadius(12), BorderBrush = T.B("#4DFBBF24"), BorderThickness = new Thickness(1), Background = T.B("#14FBBF24"), Padding = new Thickness(16, 12, 16, 12), Margin = new Thickness(0, 0, 0, 18) };
+        banner = new Border { Visibility = Visibility.Collapsed, CornerRadius = new CornerRadius(7), BorderBrush = T.B("#4DFBBF24"), BorderThickness = new Thickness(1), Background = T.B("#14FBBF24"), Padding = new Thickness(16, 12, 16, 12), Margin = new Thickness(0, 0, 0, 18) };
         var bg = new DockPanel(); var retry = Btn("Tentar de novo"); retry.Click += (s, e) => RefreshStatus(true); DockPanel.SetDock(retry, Dock.Right); bg.Children.Add(retry);
         bannerTxt = Txt("", 13.5, T.B("#FDE68A")); bannerTxt.VerticalAlignment = VerticalAlignment.Center; bg.Children.Add(bannerTxt); banner.Child = bg;
         mainStack.Children.Add(banner);
 
         var header = new DockPanel { Margin = new Thickness(0, 0, 0, 22) };
         headerActions = new StackPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Bottom }; DockPanel.SetDock(headerActions, Dock.Right); header.Children.Add(headerActions);
-        title = new TextBlock { FontFamily = T.Display, FontSize = 27, FontWeight = FontWeights.SemiBold };
-        subtitle = Txt("", 14, T.Muted); subtitle.Margin = new Thickness(0, 4, 0, 0);
-        header.Children.Add(Stack(0, title, subtitle));
+        title = new TextBlock { FontFamily = T.Display, FontSize = 30, FontWeight = FontWeights.SemiBold, Margin = new Thickness(0, 4, 0, 0) };
+        subtitle = new TextBlock { FontFamily = T.Mono, FontSize = 11, Foreground = T.Accent };
+        header.Children.Add(Stack(0, subtitle, title));
         mainStack.Children.Add(header); mainStack.Children.Add(pages);
 
         AddPage("luz", BuildLight()); AddPage("pintar", BuildPaint()); AddPage("teclas", BuildKeys());
@@ -310,20 +310,17 @@ class MainWindow : Window
     // ------------------------------------------------------------ sidebar
     FrameworkElement BuildSidebar()
     {
-        var side = new Border { BorderBrush = T.Line, BorderThickness = new Thickness(0, 0, 1, 0), Padding = new Thickness(14, 20, 14, 20), Background = new LinearGradientBrush(T.C("#0D0D10"), T.C("#09090B"), 90) };
+        var side = new Border { BorderBrush = T.Line, BorderThickness = new Thickness(0, 0, 1, 0), Padding = new Thickness(14, 20, 14, 20), Background = new LinearGradientBrush(T.C("#0B0B0C"), T.C("#0E0E0F"), 90) };
         var dp = new DockPanel(); side.Child = dp;
         var brand = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(6, 0, 0, 24) }; DockPanel.SetDock(brand, Dock.Top);
-        var mark = new Grid { Width = 30, Height = 30 };
-        mark.Children.Add(new Border { CornerRadius = new CornerRadius(9), Background = new LinearGradientBrush(new GradientStopCollection { new GradientStop(T.C("#8B7CFF"), 0), new GradientStop(T.C("#5EEAD4"), .5), new GradientStop(T.C("#F472B6"), 1) }, 45), Effect = new DropShadowEffect { Color = T.C("#8B7CFF"), BlurRadius = 18, ShadowDepth = 0, Opacity = .5 } });
-        mark.Children.Add(new Border { CornerRadius = new CornerRadius(7), Background = T.B("#0D0D10"), Margin = new Thickness(3) });
-        mark.Children.Add(new Border { CornerRadius = new CornerRadius(2), BorderBrush = T.B("#CFC8FF"), BorderThickness = new Thickness(1.5, 3, 1.5, 1.5), Margin = new Thickness(8, 9, 8, 9) });
+        var mark = new Border { Width = 10, Height = 10, CornerRadius = new CornerRadius(2), Background = T.Accent, VerticalAlignment = VerticalAlignment.Center };
         brand.Children.Add(mark);
         var bt = new StackPanel { Margin = new Thickness(10, 0, 0, 0), VerticalAlignment = VerticalAlignment.Center };
-        bt.Children.Add(new TextBlock { Text = "K86 Studio", FontFamily = T.Display, FontWeight = FontWeights.SemiBold, FontSize = 15 }); bt.Children.Add(Txt("Attack Shark K86", 11.5, T.Muted));
+        bt.Children.Add(new TextBlock { Text = "K86 STUDIO", FontFamily = T.Mono, FontWeight = FontWeights.Bold, FontSize = 13 }); bt.Children.Add(new TextBlock { Text = "ATTACK SHARK", FontFamily = T.Mono, FontSize = 10, Foreground = T.Faint, Margin = new Thickness(0, 2, 0, 0) });
         brand.Children.Add(bt); dp.Children.Add(brand);
 
         var nav = new Grid(); DockPanel.SetDock(nav, Dock.Top);
-        navInd = new Border { Height = 38, VerticalAlignment = VerticalAlignment.Top, CornerRadius = new CornerRadius(10), Background = T.Panel3, BorderBrush = T.Line, BorderThickness = new Thickness(1), RenderTransform = new TranslateTransform() };
+        navInd = new Border { Width = 2, Height = 18, Margin = new Thickness(0, 10, 0, 0), HorizontalAlignment = HorizontalAlignment.Left, VerticalAlignment = VerticalAlignment.Top, CornerRadius = new CornerRadius(1), Background = T.Accent, RenderTransform = new TranslateTransform() };
         nav.Children.Add(navInd);
         var navStack = new StackPanel(); nav.Children.Add(navStack);
         var items = new[] { new[] { "luz", "Iluminação", "M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8zM12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" },
@@ -349,7 +346,7 @@ class MainWindow : Window
         profileSeg.Changed += async i => { if (!connected) return; await Run(() => be.SetProfile(i), "Perfil " + (i + 1) + " ativado"); profile = i; await LoadAll(); };
         prof.Children.Add(profileSeg); dp.Children.Add(prof);
 
-        var status = new Border { CornerRadius = new CornerRadius(12), BorderBrush = T.Line, BorderThickness = new Thickness(1), Background = T.Panel, Padding = new Thickness(12), VerticalAlignment = VerticalAlignment.Bottom };
+        var status = new Border { BorderBrush = T.Line, BorderThickness = new Thickness(0, 1, 0, 0), Padding = new Thickness(6, 14, 6, 0), VerticalAlignment = VerticalAlignment.Bottom };
         DockPanel.SetDock(status, Dock.Bottom);
         dot = new Ellipse { Width = 8, Height = 8, Fill = T.Faint, Margin = new Thickness(0, 0, 9, 0) };
         stTitle = new TextBlock { Text = "Procurando…", FontWeight = FontWeights.Medium }; stSub = Txt("Ligue o K86 no cabo USB", 12, T.Muted); stSub.Margin = new Thickness(0, 4, 0, 0);
@@ -369,7 +366,7 @@ class MainWindow : Window
             { "macros", new[] { "Macros", "Grave sequências de teclas e coloque numa tecla só." } },
             { "tela", new[] { "Tela", "Coloque uma foto ou GIF na telinha do K86." } },
             { "ajustes", new[] { "Ajustes", "Energia, travas e opções do teclado." } } };
-        title.Text = info[key][0]; subtitle.Text = info[key][1];
+        title.Text = info[key][0]; { int ix = navBtns.FindIndex(x => (string)x.Tag == key); subtitle.Text = (ix + 1).ToString("00") + " / " + navBtns.Count.ToString("00"); }
         for (int i = 0; i < navBtns.Count; i++)
         {
             var b = navBtns[i]; bool on = (string)b.Tag == key;
@@ -383,7 +380,7 @@ class MainWindow : Window
         headerActions.Children.Clear();
         if (key == "teclas") { var b = Btn("Restaurar todas", "Ghost"); b.Click += async (s, e) => { await Run(() => be.ResetKeys(profile), "Todas as teclas voltaram ao original"); await LoadMatrix(); }; headerActions.Children.Add(b); }
         if (key == "luz" && (effect.Mode == 20 || effect.Mode == 21 || effect.Mode == 22))
-            headerActions.Children.Add(new Border { CornerRadius = new CornerRadius(99), Background = T.B("#145EEAD4"), BorderBrush = T.B("#335EEAD4"), BorderThickness = new Thickness(1), Padding = new Thickness(10, 3, 10, 3), Child = Txt("● sincronizando com o PC", 12, T.Accent2) });
+            headerActions.Children.Add(new Border { CornerRadius = new CornerRadius(99), Background = T.B("#14FF9A66"), BorderBrush = T.B("#33FF9A66"), BorderThickness = new Thickness(1), Padding = new Thickness(10, 3, 10, 3), Child = Txt("● sincronizando com o PC", 12, T.Accent2) });
         if (key == "pintar") PaintRender();
     }
 
@@ -393,7 +390,7 @@ class MainWindow : Window
         var s = await Task.Run(() => be.Status());
         bool was = connected; connected = s.Connected;
         dot.Fill = s.Connected ? T.Ok : T.Faint;
-        if (s.Connected && !T.Reduce) { if (dot.Effect == null) dot.Effect = new DropShadowEffect { Color = T.C("#4ADE80"), BlurRadius = 10, ShadowDepth = 0, Opacity = .8 }; } else dot.Effect = null;
+        if (s.Connected && !T.Reduce) { dot.Effect = null; } else dot.Effect = null;
         stTitle.Text = s.Connected ? "K86 conectado" : "Desconectado";
         stSub.Text = s.Connected ? "Pelo cabo USB" : s.Dongle ? "Só o receptor sem fio" : "Ligue o K86 no cabo USB";
         banner.Visibility = s.Connected ? Visibility.Collapsed : Visibility.Visible;
@@ -416,7 +413,7 @@ class MainWindow : Window
     {
         ToastLog.AppendLine((err ? "ERR " : "OK ") + msg);
         var tb = Txt(msg, 13.5); tb.MaxWidth = 340;
-        var b = new Border { CornerRadius = new CornerRadius(12), Background = T.B("#1D1D24"), BorderBrush = T.Line2, BorderThickness = new Thickness(1), Padding = new Thickness(14, 12, 14, 12), Margin = new Thickness(0, 8, 0, 0),
+        var b = new Border { CornerRadius = new CornerRadius(7), Background = T.B("#1D1D1F"), BorderBrush = T.Line2, BorderThickness = new Thickness(1), Padding = new Thickness(14, 12, 14, 12), Margin = new Thickness(0, 8, 0, 0),
             Effect = new DropShadowEffect { BlurRadius = 30, ShadowDepth = 10, Opacity = .5, Direction = 270 }, RenderTransform = new TranslateTransform(0, 40), Opacity = 0,
             Child = Row(10, new Ellipse { Width = 8, Height = 8, Fill = err ? T.Danger : T.Ok, VerticalAlignment = VerticalAlignment.Top, Margin = new Thickness(0, 6, 0, 0) }, tb) };
         toasts.Children.Add(b);
@@ -455,7 +452,7 @@ class MainWindow : Window
         var wrap = new WrapPanel();
         foreach (var m in Modes)
         {
-            var chip = new Border { Height = 6, Width = 64, CornerRadius = new CornerRadius(3), HorizontalAlignment = HorizontalAlignment.Left, Background = FxChip(m.Id) };
+            var chip = new TextBlock { Text = (Array.IndexOf(Modes, m) + 1).ToString("00"), FontFamily = T.Mono, FontSize = 10.5, Foreground = T.Faint };
             var name = new TextBlock { Text = m.Name, FontSize = 12.5, FontWeight = FontWeights.Medium, VerticalAlignment = VerticalAlignment.Bottom };
             var g = new Grid(); g.Children.Add(chip); g.Children.Add(name);
             var b = new ToggleButton { Style = S("Fx"), Content = g, Tag = m.Id };
@@ -492,12 +489,12 @@ class MainWindow : Window
         switch (id)
         {
             case 1: return T.Accent;
-            case 2: return grad(new[] { "#1E1B4B", "#8B7CFF", "#1E1B4B" });
+            case 2: return grad(new[] { "#1E1B4B", "#FF5B1F", "#1E1B4B" });
             case 3: return grad(new[] { "#F43F5E", "#A855F7", "#06B6D4" });
-            case 0: return T.B("#2A2A32");
+            case 0: return T.B("#2E2E31");
             case 21: return grad(new[] { "#0EA5E9", "#22C55E" });
-            case 13: return grad(new[] { "#F472B6", "#FACC15", "#5EEAD4" });
-            case 20: case 22: return grad(new[] { "#5EEAD4", "#09090B", "#5EEAD4", "#09090B", "#5EEAD4", "#09090B", "#5EEAD4" });
+            case 13: return grad(new[] { "#F472B6", "#FACC15", "#FF9A66" });
+            case 20: case 22: return grad(new[] { "#FF9A66", "#0E0E0F", "#FF9A66", "#0E0E0F", "#FF9A66", "#0E0E0F", "#FF9A66" });
             default: return grad(new[] { "#F43F5E", "#F59E0B", "#84CC16", "#06B6D4", "#8B5CF6" });
         }
     }
@@ -793,7 +790,7 @@ class MainWindow : Window
         var clr = Btn("Limpar", "Ghost"); clr.Margin = new Thickness(6, 0, 0, 0); clr.Click += (s, e) => { Macros()[curMacro].Events.Clear(); SaveMacros(); RenderMacro(); RenderSlots(); };
         var top = new DockPanel(); var tr = Row(0, recBtn, clr); DockPanel.SetDock(tr, Dock.Right); top.Children.Add(tr); top.Children.Add(macroName);
         timeline = new WrapPanel();
-        var tlBorder = new Border { MinHeight = 130, CornerRadius = new CornerRadius(12), Background = T.Panel2, BorderBrush = T.Line, BorderThickness = new Thickness(1), Padding = new Thickness(12), Child = timeline };
+        var tlBorder = new Border { MinHeight = 130, CornerRadius = new CornerRadius(7), Background = T.Panel2, BorderBrush = T.Line, BorderThickness = new Thickness(1), Padding = new Thickness(12), Child = timeline };
         fixedSw = Switch(); fixedMs = new TextBox { Style = S("Input"), Width = 70, Text = "20" }; repeatBox = new TextBox { Style = S("Input"), Width = 70, Text = "1" };
         repeatBox.LostFocus += (s, e) => { int r; Macros()[curMacro].Repeat = int.TryParse(repeatBox.Text, out r) ? Math.Max(1, Math.Min(999, r)) : 1; repeatBox.Text = Macros()[curMacro].Repeat.ToString(); SaveMacros(); };
         var opts = new DockPanel(); var rep = Row(8, Txt("Repetir", 14, T.Muted), repeatBox, Txt("vez(es)", 14, T.Muted)); DockPanel.SetDock(rep, Dock.Right); opts.Children.Add(rep);
@@ -882,8 +879,8 @@ class MainWindow : Window
     FrameworkElement BuildScreen()
     {
         scrImg = new Image { Width = 480, Height = 270, Stretch = Stretch.Fill }; RenderOptions.SetBitmapScalingMode(scrImg, BitmapScalingMode.HighQuality);
-        var device = new Border { CornerRadius = new CornerRadius(18), Padding = new Thickness(18), BorderBrush = T.Line2, BorderThickness = new Thickness(1), Background = new LinearGradientBrush(T.C("#1A1A20"), T.C("#111115"), 90),
-            Child = new Border { CornerRadius = new CornerRadius(8), BorderBrush = T.B("#26262E"), BorderThickness = new Thickness(3), Background = Brushes.Black, HorizontalAlignment = HorizontalAlignment.Center, Child = scrImg, ClipToBounds = true } };
+        var device = new Border { CornerRadius = new CornerRadius(18), Padding = new Thickness(18), BorderBrush = T.Line2, BorderThickness = new Thickness(1), Background = new LinearGradientBrush(T.C("#1A1A1C"), T.C("#121213"), 90),
+            Child = new Border { CornerRadius = new CornerRadius(8), BorderBrush = T.B("#2B2B2E"), BorderThickness = new Thickness(3), Background = Brushes.Black, HorizontalAlignment = HorizontalAlignment.Center, Child = scrImg, ClipToBounds = true } };
         drop = new Border { CornerRadius = new CornerRadius(16), BorderBrush = T.Line2, BorderThickness = new Thickness(1.5), Padding = new Thickness(22), Background = Brushes.Transparent, AllowDrop = true, Cursor = Cursors.Hand,
             Child = Stack(4, new TextBlock { Text = "Arraste uma foto ou GIF aqui", FontWeight = FontWeights.SemiBold, HorizontalAlignment = HorizontalAlignment.Center }, new TextBlock { Text = "ou clique para escolher · 240 × 135 pixels", Foreground = T.Muted, FontSize = 12.5, HorizontalAlignment = HorizontalAlignment.Center }) };
         drop.DragEnter += (s, e) => { drop.BorderBrush = T.Accent; drop.Background = T.AccentSoft; };
